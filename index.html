@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduManage - Institute Management</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="container"> <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2><i class="fas fa-graduation-cap"></i> EduManage</h2>
+            </div>
+            <nav class="navigation">
+                <ul>
+                    <li><a href="#dashboard" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="#students" class="nav-link"><i class="fas fa-users"></i> Students</a></li>
+                    <li><a href="#batches" class="nav-link"><i class="fas fa-layer-group"></i> Batches</a></li>
+                    <li><a href="#fees" class="nav-link"><i class="fas fa-money-bill-wave"></i> Fees</a></li>
+                </ul>
+                <div style="flex: 1;"></div>
+                <ul style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <li><a href="#all-students" class="nav-link"> <i class="fas fa-archive"></i> All Students </a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <p>© 2023 EduManage</p>
+            </div>
+        </aside>
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-profile">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="user-email">Loading...</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content">
+                <!-- DASHBOARD SECTION -->
+                <section id="dashboard-section" class="section">
+                    <div class="dashboard-container">
+                        <div class="stats-cards">
+                            <div class="stat-card">
+                                <div class="stat-icon bg-primary">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="total-students">0</h3>
+                                    <p>Total Students</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon bg-success">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="total-batches">0</h3>
+                                    <p>Total Batches</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon bg-warning">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="total-revenue">₹0</h3>
+                                    <p>Total Revenue</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon bg-danger">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3 id="pending-fees">₹0</h3>
+                                    <p>Pending Fees</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="charts-container">
+                            <div class="chart-box">
+                                <h3>Students by Batch</h3>
+                                <canvas id="batchDistributionChart" height="300"></canvas>
+                            </div>
+                            <div class="chart-box">
+                                <h3>Monthly Fee Collection</h3>
+                                <canvas id="feeCollectionChart" height="300"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="recent-activity">
+                            <h3>Recent Activity</h3>
+                            <div class="activity-list" id="activity-list">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- STUDENTS SECTION -->
+                <section id="students-section" class="section">
+                    <div class="page-header">
+                        <h2>All Students</h2>
+                        <button class="btn btn-primary" id="addStudentBtn">
+                            <i class="fas fa-plus"></i> Add Student
+                        </button>
+                    </div>
+                    <div class="filters">
+                        <div class="search-box">
+                            <input type="text" id="searchStudent" placeholder="Search by name or father's name...">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div class="filter-options">
+                            <select id="filterByBatch">
+                                <option value="">All Batches</option>
+                            </select>
+                            <select id="filterByCourse">
+                                <option value="">All Courses</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Father's Name</th>
+                                    <th>Course</th>
+                                    <th>Batch</th>
+                                    <th>Monthly Fee</th>
+                                    <th>Admission Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody">
+                                <tr>
+                                    <td colspan="8" class="no-data">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- BATCHES SECTION -->
+                <section id="batches-section" class="section">
+                    <div class="page-header">
+                        <h2>Batch Management</h2>
+                        <button class="btn btn-primary" id="addBatchBtn">
+                            <i class="fas fa-plus"></i> Add Batch
+                        </button>
+                    </div>
+                    <div class="batch-selector">
+                        <div
+                            style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
+                            <select id="batchSelector">
+                                <option value="">Loading batches...</option>
+                            </select>
+                            <button class="btn btn-danger" id="deleteBatchBtn">
+                                <i class="fas fa-trash"></i> Delete Batch
+                            </button>
+                        </div>
+                    </div>
+                    <div class="batch-details">
+                        <div class="batch-info">
+                            <h3 id="batchName">-</h3>
+                            <div class="batch-stats">
+                                <div class="stat">
+                                    <span class="label">Total Students:</span>
+                                    <span class="value" id="batchStudentCount">0</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="label">Courses:</span>
+                                    <span class="value" id="batchCourses">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="students-in-batch">
+                        <h3>Students in this Batch</h3>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Course</th>
+                                        <th>Monthly Fee</th>
+                                        <th>Admission Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="batchStudentsTable">
+                                    <tr>
+                                        <td colspan="6" class="no-data">Select a batch to view students.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- FEES SECTION -->
+                <section id="fees-section" class="section">
+                    <div class="page-header">
+                        <h2>Fee Management</h2>
+                        <button class="btn btn-primary" id="payFeeBtn">
+                            <i class="fas fa-money-bill"></i> Record Payment
+                        </button>
+                    </div>
+                    <div class="fee-filters">
+                        <div class="search-box">
+                            <input type="text" id="feeSearch" placeholder="Search by student name or ID...">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div class="filter-options">
+                            <select id="feeStatusFilter">
+                                <option value="">All Status</option>
+                                <option value="paid">Paid</option>
+                                <option value="unpaid">Unpaid</option>
+                                <option value="partial">Partial Payment</option>
+                            </select>
+                            <select id="monthFilter">
+                                <option value="">All Months</option>
+                                <option value="0">January</option>
+                                <option value="1">February</option>
+                                <option value="2">March</option>
+                                <option value="3">April</option>
+                                <option value="4">May</option>
+                                <option value="5">June</option>
+                                <option value="6">July</option>
+                                <option value="7">August</option>
+                                <option value="8">September</option>
+                                <option value="9">October</option>
+                                <option value="10">November</option>
+                                <option value="11">December</option>
+                            </select>
+                            <select id="yearFilter">
+                                <option value="">All Years</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="fee-summary">
+                        <div class="summary-card">
+                            <h4>Total Amount</h4>
+                            <p id="totalAmount">₹0</p>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Paid Amount</h4>
+                            <p id="paidAmount">₹0</p>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Outstanding</h4>
+                            <p id="outstandingAmount">₹0</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Student Name</th>
+                                    <th>Batch</th>
+                                    <th>Month/Year</th>
+                                    <th>Amount Due</th>
+                                    <th>Amount Paid</th>
+                                    <th>Status</th>
+                                    <th>Payment Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="feesTableBody">
+                                <tr>
+                                    <td colspan="9" class="no-data">Loading fee records...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ALL STUDENTS SECTION -->
+                <section id="all-students-section" class="section">
+                    <div class="page-header">
+                        <h2>Complete Student Records</h2>
+                        <div style="font-size: 0.9rem; color: #6c757d; font-weight: 500;">
+                            <i class="fas fa-info-circle"></i> Read-only archive including deleted students
+                        </div>
+                    </div>
+                    <div class="filters">
+                        <div class="search-box">
+                            <input type="text" id="searchAllStudents" placeholder="Search by name or father's name...">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Father's Name</th>
+                                    <th>Phone</th> <!-- 👈 NEW -->
+                                    <th>Course</th>
+                                    <th>Batch</th>
+                                    <th>Admission Date</th>
+                                    <th>Total Due</th>
+                                    <th>Total Paid</th>
+                                    <th>Outstanding</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allStudentsTableBody">
+                                <tr>
+                                    <td colspan="10" class="no-data">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div
+                        style="margin-top: 30px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h4><i class="fas fa-lightbulb"></i> About This Page</h4>
+                        <p>This archive shows all students ever registered, including those archived ("deleted").</p>
+                        <p>Financial summary is calculated from all fee records associated with each student.</p>
+                        <p>Active students can be managed from the "Active Students" page.</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Add/Edit Student Modal -->
+    <div class="modal" id="addStudentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="studentModalTitle">Add New Student</h3>
+                <button class="close-btn" id="closeStudentModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="studentForm">
+                    <input type="hidden" id="studentId" name="studentId">
+                    <div class="form-group">
+                        <label for="studentName">Full Name *</label>
+                        <input type="text" id="studentName" name="studentName" placeholder="Enter full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fatherName">Father's Name *</label>
+                        <input type="text" id="fatherName" name="fatherName" placeholder="Enter father's name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number (Optional)</label>
+                        <input type="tel" id="phone" name="phone" placeholder="e.g., 9876543210" pattern="[0-9]{10}"
+                            maxlength="10">
+                        <small style="color: #6c757d;">10-digit mobile number</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="admissionDate">Admission Date *</label>
+                        <input type="date" id="admissionDate" name="admissionDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="course">Course *</label>
+                        <input type="text" id="course" name="course" placeholder="e.g., Web Development" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="batch">Batch *</label>
+                        <select id="batch" name="batch" required>
+                            <option value="">Select Batch</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="monthlyFee">Monthly Fee (₹) *</label>
+                        <input type="number" id="monthlyFee" name="monthlyFee" min="0" step="100"
+                            placeholder="e.g., 2500" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Student</button>
+                        <button type="button" class="btn btn-secondary" id="cancelStudentBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div> <!-- Add/Edit Batch Modal -->
+    <div class="modal" id="addBatchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="batchModalTitle">Add New Batch</h3>
+                <button class="close-btn" id="closeBatchModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="batchForm">
+                    <input type="hidden" id="batchId" name="batchId">
+                    <div class="form-group">
+                        <label for="batchNameInput">Batch Name *</label>
+                        <input type="text" id="batchNameInput" name="batchName" placeholder="e.g., Morning Batch 2024"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label for="batchTiming">Timing (Optional)</label>
+                        <input type="text" id="batchTiming" name="timing" placeholder="e.g., 9:00 AM - 11:00 AM">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Batch</button>
+                        <button type="button" class="btn btn-secondary" id="cancelBatchBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div> <!-- Update Student Batch Modal -->
+    <div class="modal" id="updateStudentBatchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Update Student Batch</h3>
+                <button class="close-btn" id="closeUpdateBatchModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="updateStudentBatchForm">
+                    <input type="hidden" id="updateStudentId" name="updateStudentId">
+                    <div class="form-group">
+                        <label for="newBatch">New Batch *</label>
+                        <select id="newBatch" name="newBatch" required>
+                            <option value="">Select Batch</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="button" class="btn btn-secondary" id="cancelUpdateBatchBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div> <!-- Pay Fee Modal -->
+    <div class="modal" id="payFeeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Record Payment</h3>
+                <button class="close-btn" id="closePayFeeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="payFeeForm">
+                    <div class="form-group">
+                        <label for="studentSelect">Select Student *</label>
+                        <select id="studentSelect" name="studentSelect" required>
+                            <option value="">Select Student</option>
+                        </select>
+                        <small style="color: #6c757d;">Total due will auto-calculate based on all unpaid months.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="amountDue">Total Amount Due *</label>
+                        <input type="number" id="amountDue" readonly placeholder="Select student to see due amount">
+                    </div>
+                    <div class="form-group">
+                        <label for="amountPaid">Amount Paid *</label>
+                        <input type="number" id="amountPaid" min="0" step="10" required
+                            placeholder="Enter amount received">
+                        <small style="color: #6c757d;">Payments are applied to oldest unpaid months first.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentMethod">Payment Method</label>
+                        <select id="paymentMethod" name="paymentMethod">
+                            <option value="cash">Cash</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="upi">UPI</option>
+                            <option value="card">Card</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentNotes">Notes (Optional)</label>
+                        <textarea id="paymentNotes" rows="3" placeholder="Transaction ID, reference, etc."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Record Payment</button>
+                        <button type="button" class="btn btn-secondary" id="cancelPayFeeBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div> <!-- View Payment Details Modal -->
+    <div class="modal" id="viewPaymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Payment Details</h3>
+                <button class="close-btn" id="closeViewPaymentModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-details" id="paymentDetailsContent">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeViewPaymentBtn">Close</button>
+            </div>
+        </div>
+    </div>
+    <script type="module">
+        // ============================= 
+        // 🔥 FIREBASE CONFIGURATION 
+        // ============================= 
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJhbTQ5ZwLhakUQBGpclZVsZG0V8-qWhs",
+            authDomain: "stylestock.firebaseapp.com",
+            projectId: "stylestock",
+            storageBucket: "stylestock.firebasestorage.app",
+            messagingSenderId: "508467185521",
+            appId: "1:508467185521:web:71d911a1aff8987cc358d0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // ============================= 
+        // 🧠 UTILITIES 
+        // ============================= 
+        function generateId() { return '_' + Math.random().toString(36).substr(2, 9); }
+        function formatDate(isoDateString) {
+            if (!isoDateString) return '';
+            const date = new Date(isoDateString);
+            if (isNaN(date.getTime())) return '';
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        function showToast(message, type = 'success') {
+            document.querySelectorAll('.toast').forEach(el => el.remove());
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.style.cssText = ` position: fixed; top: 20px; right: 20px; background: ${type === 'error' ? '#f8d7da' : '#d1e7dd'}; color: ${type === 'error' ? '#721c24' : '#0f5132'}; border: 1px solid ${type === 'error' ? '#f5c6cb' : '#badbcc'}; padding: 12px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; font-weight: 500; display: flex; align-items: center; gap: 8px; animation: slideInRight 0.3s ease forwards; `;
+            toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> <span>${message}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease forwards';
+                setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
+            }, 3000);
+        }
+        const style = document.createElement('style');
+        style.textContent = ` @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } } @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } } `;
+        document.head.appendChild(style);
+
+        // ============================= 
+        // 💾 FIREBASE STORAGE LAYER (Replaces firebase-utils.js) 
+        // ============================= 
+        class FirebaseStorage {
+            static async getStudents() { const snapshot = await getDocs(collection(db, "students")); return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); }
+            static async saveStudent(student) { if (student.id) { await updateDoc(doc(db, "students", student.id), student); } else { const docRef = await addDoc(collection(db, "students"), student); student.id = docRef.id; } return student; }
+            static async archiveStudent(id) { await updateDoc(doc(db, "students", id), { deleted: true }); }
+            static async getBatches() { const snapshot = await getDocs(collection(db, "batches")); return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); }
+            static async saveBatch(batch) { if (batch.id) { await updateDoc(doc(db, "batches", batch.id), batch); } else { const docRef = await addDoc(collection(db, "batches"), batch); batch.id = docRef.id; } return batch; }
+            static async deleteBatch(id) { await deleteDoc(doc(db, "batches", id)); }
+            static async getFees() { const snapshot = await getDocs(collection(db, "fees")); return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); }
+            static async saveFee(fee) {
+                if (fee.id && fee.id.startsWith('_')) delete fee.id; // client-generated temp ID
+                if (fee.id) {
+                    await updateDoc(doc(db, "fees", fee.id), fee);
+                } else {
+                    const docRef = await addDoc(collection(db, "fees"), fee);
+                    fee.id = docRef.id;
+                }
+                return fee;
+            }
+        }
+        // ============================= 
+        // 🗃️ DATA CACHE (Session Only) 
+        // ============================= 
+        class DataCache {
+            static _cache = { batches: null, students: null, fees: null };
+            static _fetching = { batches: false, students: false, fees: false };
+            static async getBatches() { if (this._cache.batches) return this._cache.batches; if (this._fetching.batches) { await new Promise(r => { const i = setInterval(() => { if (!this._fetching.batches) { clearInterval(i); r(); } }, 50); }); return this._cache.batches; } this._fetching.batches = true; try { return this._cache.batches = await FirebaseStorage.getBatches(); } finally { this._fetching.batches = false; } }
+            static async getStudents() { if (this._cache.students) return this._cache.students; if (this._fetching.students) { await new Promise(r => { const i = setInterval(() => { if (!this._fetching.students) { clearInterval(i); r(); } }, 50); }); return this._cache.students; } this._fetching.students = true; try { return this._cache.students = await FirebaseStorage.getStudents(); } finally { this._fetching.students = false; } }
+            static async getFees() { if (this._cache.fees) return this._cache.fees; if (this._fetching.fees) { await new Promise(r => { const i = setInterval(() => { if (!this._fetching.fees) { clearInterval(i); r(); } }, 50); }); return this._cache.fees; } this._fetching.fees = true; try { return this._cache.fees = await FirebaseStorage.getFees(); } finally { this._fetching.fees = false; } }
+            static invalidate(key) { if (key) this._cache[key] = null; else this._cache = { batches: null, students: null, fees: null }; }
+        }
+
+        // ============================= 
+        // 🔐 AUTH MODULE 
+        // ============================= 
+        class Auth {
+            static async login(email, password) {
+                try {
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    console.log("✅ User logged in:", userCredential.user.email);
+                    return userCredential.user;
+                } catch (error) {
+                    console.error("🔐 Login failed:", error.message);
+                    showToast(`Login failed: ${error.message}`, 'error');
+                    return null;
+                }
+            }
+            static async loginWithGoogle() {
+                const provider = new GoogleAuthProvider();
+                try {
+                    const result = await signInWithPopup(auth, provider);
+                    console.log("✅ Google login successful:", result.user.email);
+                    return result.user;
+                } catch (error) {
+                    console.error("🔐 Google login failed:", error.message);
+                    showToast('Google login failed: ' + error.message, 'error');
+                    return null;
+                }
+            }
+            static async logout() {
+                try {
+                    await signOut(auth);
+                    console.log("🚪 User logged out");
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error("⚠️ Logout failed:", error.message);
+                    showToast('Logout failed: ' + error.message, 'error');
+                }
+            }
+            static onAuthStateChanged(callback) { return onAuthStateChanged(auth, callback); }
+            static getCurrentUser() { return auth.currentUser; }
+        }
+
+        // ============================= 
+        // 🎯 MAIN APP CONTROLLER 
+        // ============================= 
+        class App {
+            static _initialized = false;
+            static async init() { if (this._initialized) return; this._initialized = true; console.log("🚀 EduManage Single-Page App Initializing..."); if (document.readyState !== 'loading') this.onDOMReady(); else document.addEventListener('DOMContentLoaded', () => this.onDOMReady()); }
+            static async onDOMReady() {
+                // Preload data 
+                if (!window.location.pathname.includes('login.html')) {
+                    Promise.all([
+                        DataCache.getBatches().catch(console.warn),
+                        DataCache.getStudents().catch(console.warn),
+                        DataCache.getFees().catch(console.warn)
+                    ]);
+                }
+                await this.initializeAuth();
+                if (!window.location.pathname.includes('login.html')) {
+                    this.setupNavigation();
+                    this.setupGlobalUI();
+                }
+                this.handleInitialRoute();
+                window.addEventListener('hashchange', () => {
+                    const sectionId = location.hash.substring(1) || 'dashboard';
+                    this.showSection(sectionId);
+                });
+            }
+            static async initializeAuth() {
+                return new Promise(resolve => {
+                    Auth.onAuthStateChanged(async (user) => {
+                        const isLoginPage = window.location.pathname.includes('login.html');
+                        if (!user && !isLoginPage) {
+                            window.location.href = 'login.html';
+                            resolve();
+                            return;
+                        }
+                        if (user && isLoginPage) {
+                            window.location.href = 'index.html'; // or dashboard.html 
+                            resolve();
+                            return;
+                        }
+                        if (user && document.getElementById('user-email')) {
+                            document.getElementById('user-email').textContent = user.email;
+                        }
+                        resolve();
+                    });
+                });
+            }
+            static setupNavigation() {
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const target = e.target.closest('a').getAttribute('href').substring(1);
+                        window.location.hash = target;
+                    });
+                });
+            }
+            static setupGlobalUI() {
+                const menuToggle = document.getElementById('menuToggle');
+                const sidebar = document.querySelector('.sidebar');
+                if (menuToggle && sidebar) {
+                    menuToggle.addEventListener('click', () => sidebar.classList.toggle('active'));
+                }
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('modal')) e.target.style.display = 'none';
+                });
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+                    }
+                });
+            }
+            static async showSection(sectionId) {
+                document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+                const targetSection = document.getElementById(`${sectionId}-section`);
+                if (targetSection) targetSection.classList.add('active');
+                switch (sectionId) {
+                    case 'dashboard': await Dashboard.init(); break;
+                    case 'students': await Students.init(); break;
+                    case 'batches': await Batches.init(); break;
+                    case 'fees': await Fees.init(); break;
+                    case 'all-students': await AllStudents.init(); break;
+                }
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                const activeLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
+                if (activeLink) activeLink.classList.add('active');
+            }
+            static handleInitialRoute() {
+                const hash = window.location.hash.substring(1);
+                const sectionId = hash || 'dashboard';
+                this.showSection(sectionId);
+            }
+            static getCurrentSection() {
+                const hash = window.location.hash.substring(1) || 'dashboard';
+                return hash;
+            }
+        }
+
+        // ============================= 
+        // 📊 DASHBOARD MODULE 
+        // ============================= 
+        class Dashboard {
+            static batchChart = null;
+            static feeChart = null;
+            static async init() {
+                try {
+                    await this.renderStats();
+                    await this.renderCharts();
+                    this.renderRecentActivity();
+                    this.bindEvents();
+                } catch (error) {
+                    console.error("❌ Dashboard failed:", error);
+                    showToast("Dashboard failed to load.", "error");
+                }
+            }
+            static bindEvents() {
+                const refreshBtn = document.getElementById('refreshDashboard');
+                if (refreshBtn) refreshBtn.addEventListener('click', async () => {
+                    await this.renderStats();
+                    this.renderCharts();
+                    this.renderRecentActivity();
+                });
+            }
+            static async renderStats() {
+                try {
+                    const [students, batches, fees] = await Promise.all([
+                        DataCache.getStudents(),
+                        DataCache.getBatches(),
+                        DataCache.getFees()
+                    ]);
+                    document.getElementById('total-students').innerText = students.filter(s => !s.deleted).length;
+                    document.getElementById('total-batches').innerText = batches.length;
+                    const totalRevenue = fees.reduce((sum, f) => sum + (f.amountPaid || 0), 0);
+                    document.getElementById('total-revenue').innerText = `₹${totalRevenue.toLocaleString()}`;
+                    const pendingFees = fees.reduce((sum, f) => {
+                        const paid = f.amountPaid || 0;
+                        return sum + Math.max(0, (f.amount || 0) - paid);
+                    }, 0);
+                    document.getElementById('pending-fees').innerText = `₹${pendingFees.toLocaleString()}`;
+                } catch (error) {
+                    console.error(error);
+                    showToast("Failed stats", "error");
+                }
+            }
+            static async renderCharts() {
+                await this.renderBatchDistributionChart();
+                await this.renderFeeCollectionChart();
+            }
+            static async renderBatchDistributionChart() {
+                try {
+                    const students = (await DataCache.getStudents()).filter(s => !s.deleted);
+                    const batchCounts = {};
+                    students.forEach(s => {
+                        batchCounts[s.batch] = (batchCounts[s.batch] || 0) + 1;
+                    });
+                    const canvas = document.getElementById('batchDistributionChart');
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+                    if (this.batchChart) this.batchChart.destroy();
+                    this.batchChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(batchCounts),
+                            datasets: [{
+                                data: Object.values(batchCounts),
+                                backgroundColor: ['#4361ee', '#3a0ca3', '#f72585', '#4cc9f0', '#4895ef', '#f8961e', '#7209b7', '#3f37c9'],
+                                borderWidth: 2,
+                                borderColor: '#fff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
+                                tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} students` } }
+                            },
+                            animation: { animateRotate: true, animateScale: true }
+                        }
+                    });
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+            static async renderFeeCollectionChart() {
+                try {
+                    const fees = (await DataCache.getFees()).filter(f => (f.amountPaid || 0) > 0);
+                    const monthlyData = {};
+                    fees.forEach(f => {
+                        const key = f.paidDate ? f.paidDate.substring(0, 7) : f.month;
+                        monthlyData[key] = (monthlyData[key] || 0) + (f.amountPaid || 0);
+                    });
+                    const sortedKeys = Object.keys(monthlyData).sort();
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const labels = sortedKeys.map(k => {
+                        const [y, m] = k.split('-');
+                        return `${monthNames[parseInt(m) - 1]} ${y}`;
+                    });
+                    const data = sortedKeys.map(k => monthlyData[k]);
+                    const canvas = document.getElementById('feeCollectionChart');
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+                    if (this.feeChart) this.feeChart.destroy();
+                    this.feeChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Monthly Collection (₹)',
+                                data: data,
+                                backgroundColor: '#4361ee',
+                                borderColor: '#3a0ca3',
+                                borderWidth: 1,
+                                borderRadius: 5,
+                                borderSkipped: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { beginAtZero: true, ticks: { callback: v => '₹' + Math.floor(v).toLocaleString() } },
+                                x: { grid: { display: false } }
+                            },
+                            plugins: {
+                                legend: { display: true, position: 'top' },
+                                tooltip: { callbacks: { label: ctx => `₹${ctx.raw.toLocaleString()}` } }
+                            },
+                            animation: { duration: 1000, easing: 'easeOutQuart' }
+                        }
+                    });
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+            static async renderRecentActivity() {
+                try {
+                    const students = (await DataCache.getStudents())
+                        .filter(s => !s.deleted)
+                        .sort((a, b) => new Date(b.admissionDate) - new Date(a.admissionDate))
+                        .slice(0, 5);
+                    const list = document.getElementById('activity-list');
+                    if (!list) return;
+                    if (students.length === 0) {
+                        list.innerHTML = `<div style="text-align:center; padding:30px; color:#6c757d;"> <i class="fas fa-history" style="font-size:2rem; margin-bottom:10px;"></i> <p>No recent activity</p></div>`;
+                        return;
+                    }
+                    list.innerHTML = students.map(s => ` 
+                <div class="activity-item"> 
+                    <div class="activity-icon bg-primary"><i class="fas fa-user-plus"></i></div> 
+                    <div class="activity-content"> 
+                        <h4>${s.name} joined</h4> 
+                        <p>Admitted on ${formatDate(s.admissionDate)} • ${s.course}</p> 
+                    </div> 
+                </div> 
+            `).join('');
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+        }
+
+        // ============================= 
+        // 👨‍🎓 STUDENTS MODULE 
+        // ============================= 
+        class Students {
+            static async init() {
+                this.bindEvents();
+                await this.renderStudents();
+            }
+            static bindEvents() {
+                document.getElementById('addStudentBtn')?.addEventListener('click', () => this.openAddStudentModal());
+                document.getElementById('closeStudentModal')?.addEventListener('click', () => { document.getElementById('addStudentModal').style.display = 'none'; });
+                document.getElementById('cancelStudentBtn')?.addEventListener('click', () => { document.getElementById('addStudentModal').style.display = 'none'; });
+                document.getElementById('studentForm')?.addEventListener('submit', (e) => { e.preventDefault(); this.saveStudent(); });
+                document.getElementById('searchStudent')?.addEventListener('input', (e) => { this.filterStudents(e.target.value); });
+                document.getElementById('filterByBatch')?.addEventListener('change', () => this.applyFilters());
+                document.getElementById('filterByCourse')?.addEventListener('change', () => this.applyFilters());
+                const tableBody = document.getElementById('studentsTableBody');
+                if (tableBody) {
+                    tableBody.addEventListener('click', async (e) => {
+                        const editBtn = e.target.closest('.btn-edit-student');
+                        if (editBtn) {
+                            const id = editBtn.getAttribute('data-id');
+                            const student = (await DataCache.getStudents()).find(s => s.id === id && !s.deleted);
+                            if (student) this.openAddStudentModal(student);
+                            else showToast('Student not found.', 'error');
+                        }
+                        const delBtn = e.target.closest('.btn-danger');
+                        if (delBtn && delBtn.textContent.includes('Trash')) {
+                            const match = delBtn.getAttribute('onclick')?.match(/'([^']+)'/);
+                            if (match) await this.deleteStudent(match[1]);
+                        }
+                    });
+                }
+            }
+            static async openAddStudentModal(student = null) {
+                const modal = document.getElementById('addStudentModal');
+                const form = document.getElementById('studentForm');
+                const title = document.getElementById('studentModalTitle');
+                form.reset();
+                document.getElementById('studentId').value = '';
+                if (student) {
+                    title.innerText = 'Edit Student';
+                    document.getElementById('studentId').value = student.id || '';
+                    document.getElementById('studentName').value = student.name || '';
+                    document.getElementById('fatherName').value = student.fatherName || '';
+                    document.getElementById('admissionDate').value = student.admissionDate || '';
+                    document.getElementById('phone').value = student.phone || '';
+                    document.getElementById('course').value = student.course || '';
+                    document.getElementById('monthlyFee').value = student.monthlyFee || '';
+                } else {
+                    title.innerText = 'Add New Student';
+                }
+                const batches = await DataCache.getBatches();
+                const batchSelect = document.getElementById('batch');
+                if (batchSelect) {
+                    batchSelect.innerHTML = '<option value="">Select Batch</option>';
+                    batches.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.name;
+                        batchSelect.appendChild(opt);
+                        if (student && b.id === student.batch) opt.selected = true;
+                    });
+                }
+                modal.style.display = 'flex';
+            }
+            static isSaving = false; // ← Add this at top of Students class
+
+            static async saveStudent() {
+                if (this.isSaving) {
+                    showToast('Please wait... saving in progress.', 'error');
+                    return;
+                }
+
+                this.isSaving = true;
+
+                const form = document.getElementById('studentForm');
+                const name = form.studentName.value.trim();
+                const fatherName = form.fatherName.value.trim();
+                const admissionDate = form.admissionDate.value.trim();
+                const course = form.course.value.trim();
+                const batch = form.batch.value.trim();
+                const monthlyFee = parseFloat(form.monthlyFee.value) || 0;
+
+                if (!name || !fatherName || !admissionDate || !course || !batch) {
+                    showToast('Fill all required fields.', 'error');
+                    this.isSaving = false; // ← Unlock
+                    return;
+                }
+
+                const student = {
+                    name, fatherName, admissionDate, course, batch, monthlyFee,
+                    phone: form.phone.value.trim() || null, // ← Save as null if empty
+                    createdAt: new Date().toISOString(),
+                    deleted: false
+                };
+
+                const studentId = form.studentId.value.trim();
+                if (studentId) student.id = studentId;
+
+                try {
+                    await FirebaseStorage.saveStudent(student);
+                    DataCache.invalidate('students');
+                    DataCache.invalidate('fees');
+                    showToast('Student saved!', 'success');
+                    await this.renderStudents();
+                    this.closeAddStudentModal();
+                } catch (error) {
+                    console.error(error);
+                    showToast('Failed to save student.', 'error');
+                } finally {
+                    this.isSaving = false; // ← Always unlock
+                }
+            }
+            static closeAddStudentModal() {
+                document.getElementById('addStudentModal').style.display = 'none';
+            }
+            static async renderStudents(filterText = '', batchFilter = '', courseFilter = '') {
+                try {
+                    let students = (await DataCache.getStudents()).filter(s => !s.deleted);
+
+                    // >>> NEW: Populate Batch Filter <<<
+                    const batchSelect = document.getElementById('filterByBatch');
+                    if (batchSelect) {
+                        const batches = await DataCache.getBatches();
+                        // Keep "All Batches" as first option
+                        batchSelect.innerHTML = '<option value="">All Batches</option>';
+                        batches.forEach(b => {
+                            const opt = document.createElement('option');
+                            opt.value = b.id;
+                            opt.textContent = b.name || 'Unnamed Batch';
+                            if (b.id === batchFilter) opt.selected = true;
+                            batchSelect.appendChild(opt);
+                        });
+                    }
+
+                    // >>> NEW: Populate Course Filter <<<
+                    const courseSelect = document.getElementById('filterByCourse');
+                    if (courseSelect) {
+                        // Extract unique courses from active students
+                        const uniqueCourses = [...new Set(students.map(s => s.course).filter(Boolean))];
+                        courseSelect.innerHTML = '<option value="">All Courses</option>';
+                        uniqueCourses.forEach(course => {
+                            const opt = document.createElement('option');
+                            opt.value = course;
+                            opt.textContent = course;
+                            if (course === courseFilter) opt.selected = true;
+                            courseSelect.appendChild(opt);
+                        });
+                    }
+
+                    // Apply filters
+                    if (filterText) {
+                        const term = filterText.toLowerCase();
+                        students = students.filter(s =>
+                            (s.name?.toLowerCase().includes(term)) ||
+                            (s.fatherName?.toLowerCase().includes(term))
+                        );
+                    }
+                    if (batchFilter) students = students.filter(s => s.batch === batchFilter);
+                    if (courseFilter) students = students.filter(s => s.course === courseFilter);
+
+                    const tbody = document.getElementById('studentsTableBody');
+                    if (!tbody) return;
+
+                    if (students.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8">No active students found.</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = students.map(s => `
+            <tr>
+                <td>${s.id?.substring(0, 6).toUpperCase() || '—'}</td>
+                <td>${s.name || '—'}</td>
+                <td>${s.fatherName || '—'}</td>
+                <td>${s.course || '—'}</td>
+                <td>${s.batch || '—'}</td>
+                <td>₹${(s.monthlyFee || 0).toLocaleString()}</td>
+                <td>${formatDate(s.admissionDate) || '—'}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary btn-edit-student" data-id="${s.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="Students.deleteStudent('${s.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+                } catch (error) {
+                    console.error(error);
+                    showToast('Failed to load students.', 'error');
+                }
+            }
+            static filterStudents(query) {
+                const b = document.getElementById('filterByBatch')?.value || '';
+                const c = document.getElementById('filterByCourse')?.value || '';
+                this.renderStudents(query, b, c);
+            }
+            static applyFilters() {
+                const q = document.getElementById('searchStudent')?.value || '';
+                const b = document.getElementById('filterByBatch')?.value || '';
+                const c = document.getElementById('filterByCourse')?.value || '';
+                this.renderStudents(q, b, c);
+            }
+            static async deleteStudent(id) {
+                if (!confirm('Archive this student? They’ll be hidden but preserved.')) return;
+                try {
+                    await FirebaseStorage.archiveStudent(id);
+                    DataCache.invalidate('students');
+                    showToast('Student archived!', 'success');
+                    await this.renderStudents();
+                } catch (error) {
+                    console.error(error);
+                    showToast('Failed to archive.', 'error');
+                }
+            }
+        }
+
+        // ============================= 
+        // 📚 BATCHES MODULE 
+        // ============================= 
+        class Batches {
+            static async init() {
+                this.bindEvents();
+                await this.renderBatchSelector();
+            }
+            static bindEvents() {
+                document.getElementById('addBatchBtn')?.addEventListener('click', () => this.openAddBatchModal());
+                document.getElementById('batchSelector')?.addEventListener('change', (e) => this.loadBatchDetails(e.target.value));
+                document.getElementById('deleteBatchBtn')?.addEventListener('click', () => this.deleteCurrentBatch());
+                document.getElementById('batchForm')?.addEventListener('submit', (e) => { e.preventDefault(); this.saveBatch(); });
+                document.getElementById('closeBatchModal')?.addEventListener('click', () => this.closeBatchModal());
+                document.getElementById('cancelBatchBtn')?.addEventListener('click', () => this.closeBatchModal());
+                document.getElementById('updateStudentBatchForm')?.addEventListener('submit', (e) => { e.preventDefault(); this.updateStudentBatch(); });
+                document.getElementById('cancelUpdateBatchBtn')?.addEventListener('click', () => this.closeUpdateStudentBatchModal());
+                document.getElementById('closeUpdateBatchModal')?.addEventListener('click', () => this.closeUpdateStudentBatchModal());
+            }
+            static async renderBatchSelector() {
+                try {
+                    const selector = document.getElementById('batchSelector');
+                    if (!selector) return;
+                    selector.innerHTML = '<option value="">Loading...</option>';
+                    selector.disabled = true;
+                    const batches = await DataCache.getBatches();
+                    selector.disabled = false;
+                    selector.innerHTML = batches.length === 0 ? '<option value="">No batches — add one</option>' : '<option value="">Select a Batch</option>';
+                    batches.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.name || 'Unnamed';
+                        selector.appendChild(opt);
+                    }); const newBatchSelect = document.getElementById('newBatch');
+                    if (newBatchSelect) {
+                        newBatchSelect.innerHTML = '<option value="">Select Batch</option>';
+                        batches.forEach(b => {
+                            const opt = document.createElement('option');
+                            opt.value = b.id;
+                            opt.textContent = b.name;
+                            newBatchSelect.appendChild(opt);
+                        });
+                    }
+                    if (batches.length === 1) {
+                        selector.value = batches[0].id;
+                        this.loadBatchDetails(batches[0].id);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showToast("Failed to load batches.", "error");
+                    const s = document.getElementById('batchSelector');
+                    if (s) {
+                        s.innerHTML = '<option value="">Error loading</option>';
+                        s.disabled = false;
+                    }
+                }
+            }
+
+            static async loadBatchDetails(batchId) {
+                if (!batchId) {
+                    this.clearBatchDetails();
+                    return;
+                }
+
+                try {
+                    const [students, batches] = await Promise.all([
+                        DataCache.getStudents(),
+                        DataCache.getBatches()
+                    ]);
+
+                    const batchStudents = students.filter(s => s.batch === batchId && !s.deleted);
+                    const uniqueCourses = [...new Set(batchStudents.map(s => s.course))];
+
+                    const batch = batches.find(b => b.id === batchId);
+
+                    document.getElementById('batchName').textContent = batch?.name || '-';
+                    document.getElementById('batchStudentCount').textContent = batchStudents.length;
+                    document.getElementById('batchCourses').textContent = uniqueCourses.join(', ') || '-';
+
+                    this.renderStudentsInBatch(batchStudents);
+                } catch (error) {
+                    console.error("❌ Failed to load batch details:", error);
+                    showToast("Failed to load batch details.", "error");
+                }
+            }
+
+            static clearBatchDetails() {
+                document.getElementById('batchName').textContent = '-';
+                document.getElementById('batchStudentCount').textContent = '0';
+                document.getElementById('batchCourses').textContent = '-';
+                document.getElementById('batchStudentsTable').innerHTML = `
+            <tr>
+                <td colspan="6" class="no-data">Select a batch to view students.</td>
+            </tr>
+        `;
+            }
+
+            static renderStudentsInBatch(students) {
+                const tbody = document.getElementById('batchStudentsTable');
+                if (!tbody) return;
+
+                if (students.length === 0) {
+                    tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="no-data">No students in this batch.</td>
+                </tr>
+            `;
+                    return;
+                }
+
+                tbody.innerHTML = students.map(student => `
+            <tr>
+                <td>${student.id.substring(0, 6).toUpperCase()}</td>
+                <td>${student.name}</td>
+                <td>${student.course}</td>
+                <td>₹${(student.monthlyFee || 0).toLocaleString()}</td>
+                <td>${formatDate(student.admissionDate)}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="Batches.openUpdateStudentBatchModal('${student.id}')">
+                        <i class="fas fa-exchange-alt"></i> Change Batch
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+            }
+
+            static openAddBatchModal(batch = null) {
+                const modal = document.getElementById('addBatchModal');
+                const form = document.getElementById('batchForm');
+                const title = document.getElementById('batchModalTitle');
+
+                form.reset();
+                document.getElementById('batchId').value = '';
+
+                if (batch) {
+                    title.innerText = 'Edit Batch';
+                    document.getElementById('batchId').value = batch.id || '';
+                    document.getElementById('batchNameInput').value = batch.name || '';
+                    document.getElementById('batchTiming').value = batch.timing || '';
+                } else {
+                    title.innerText = 'Add New Batch';
+                }
+
+                modal.style.display = 'flex';
+            }
+
+            static closeBatchModal() {
+                document.getElementById('addBatchModal').style.display = 'none';
+            }
+
+            static isSaving = false; // ← Add at top of Batches class
+
+            static async saveBatch() {
+                if (this.isSaving) {
+                    showToast('Please wait... saving in progress.', 'error');
+                    return;
+                }
+
+                this.isSaving = true;
+
+                const form = document.getElementById('batchForm');
+                const batchName = form.batchName.value.trim();
+                const timing = form.timing.value.trim();
+                const batchId = form.batchId.value.trim();
+
+                if (!batchName) {
+                    showToast('Batch name is required.', 'error');
+                    this.isSaving = false;
+                    return;
+                }
+
+                const batchObj = {
+                    name: batchName,
+                    timing: timing || '',
+                    createdAt: new Date().toISOString()
+                };
+
+                try {
+                    let result;
+                    if (batchId) {
+                        batchObj.id = batchId;
+                        result = await FirebaseStorage.saveBatch(batchObj);
+                        showToast('Batch updated successfully!', 'success');
+                    } else {
+                        result = await FirebaseStorage.saveBatch(batchObj);
+                        showToast('Batch added successfully!', 'success');
+                    }
+
+                    await this.renderBatchSelector();
+
+                    this.closeBatchModal();
+
+                    const currentBatchId = document.getElementById('batchSelector')?.value;
+                    if (currentBatchId === (result.id || batchId)) {
+                        await this.loadBatchDetails(currentBatchId);
+                    }
+
+                } catch (error) {
+                    console.error("❌ Failed to save batch:", error);
+                    showToast('Failed to save batch: ' + (error.message || 'Unknown error'), 'error');
+                } finally {
+                    this.isSaving = false;
+                }
+            }
+
+            static async deleteCurrentBatch() {
+                const selector = document.getElementById('batchSelector');
+                const batchId = selector.value;
+
+                if (!batchId) {
+                    showToast('Please select a batch to delete.', 'error');
+                    return;
+                }
+
+                if (!confirm(`Are you sure you want to delete this batch? Students will retain the batch ID until reassigned.`)) {
+                    return;
+                }
+
+                try {
+                    await FirebaseStorage.deleteBatch(batchId);
+                    showToast('Batch deleted successfully!', 'success');
+                    await this.renderBatchSelector();
+                    this.clearBatchDetails();
+                } catch (error) {
+                    console.error("❌ Failed to delete batch:", error);
+                    showToast('Failed to delete batch: ' + error.message, 'error');
+                }
+            }
+
+            static openUpdateStudentBatchModal(studentId) {
+                document.getElementById('updateStudentId').value = studentId;
+                document.getElementById('updateStudentBatchModal').style.display = 'flex';
+            }
+
+            static closeUpdateStudentBatchModal() {
+                document.getElementById('updateStudentBatchModal').style.display = 'none';
+            }
+
+            static async updateStudentBatch() {
+                const studentId = document.getElementById('updateStudentId').value;
+                const newBatchId = document.getElementById('newBatch').value;
+
+                if (!newBatchId) {
+                    showToast('Please select a batch.', 'error');
+                    return;
+                }
+
+                try {
+                    const students = await DataCache.getStudents();
+                    const studentIndex = students.findIndex(s => s.id === studentId);
+
+                    if (studentIndex === -1) {
+                        showToast('Student not found.', 'error');
+                        return;
+                    }
+
+                    students[studentIndex].batch = newBatchId;
+                    await FirebaseStorage.saveStudent(students[studentIndex]);
+
+                    DataCache.invalidate('students');
+
+                    showToast('Student batch updated successfully!', 'success');
+                    this.closeUpdateStudentBatchModal();
+
+                    const currentBatchId = document.getElementById('batchSelector').value;
+                    if (currentBatchId) {
+                        await this.loadBatchDetails(currentBatchId);
+                    }
+                } catch (error) {
+                    console.error("❌ Failed to update student batch:", error);
+                    showToast('Failed to update student batch: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // =============================
+        // 💰 FEES MODULE
+        // =============================
+        class Fees {
+            static async init() {
+                await this.ensureFeeRecordsForAllStudents();
+                await this.renderFeeRecords();
+                this.bindEvents();
+            }
+
+            static bindEvents() {
+                document.getElementById('payFeeBtn')?.addEventListener('click', () => this.openPayFeeModal());
+                document.getElementById('payFeeForm')?.addEventListener('submit', (e) => { e.preventDefault(); this.recordPayment(); });
+                document.getElementById('cancelPayFeeBtn')?.addEventListener('click', () => this.closePayFeeModal());
+                document.getElementById('closePayFeeModal')?.addEventListener('click', () => this.closePayFeeModal());
+                document.getElementById('closeViewPaymentModal')?.addEventListener('click', () => this.closeViewPaymentModal());
+                document.getElementById('closeViewPaymentBtn')?.addEventListener('click', () => this.closeViewPaymentModal());
+
+                document.getElementById('studentSelect')?.addEventListener('change', (e) => this.updateAmountDue(e.target.value));
+
+                document.getElementById('feeSearch')?.addEventListener('input', (e) => this.applyFilters(e.target.value));
+                document.getElementById('feeStatusFilter')?.addEventListener('change', () => this.applyFilters());
+                document.getElementById('monthFilter')?.addEventListener('change', () => this.applyFilters());
+                document.getElementById('yearFilter')?.addEventListener('change', () => this.applyFilters());
+
+                this.populateYearFilter();
+                this.populateStudentSelect();
+            }
+
+            static async ensureFeeRecordsForAllStudents() {
+                try {
+                    const [students, fees] = await Promise.all([
+                        DataCache.getStudents(),
+                        DataCache.getFees()
+                    ]);
+
+                    let updated = false;
+                    const today = new Date();
+                    const currentYear = today.getFullYear();
+                    const currentMonth = today.getMonth();
+
+                    for (const student of students.filter(s => !s.deleted)) {
+                        const admissionDate = new Date(student.admissionDate);
+                        const admissionYear = admissionDate.getFullYear();
+                        const admissionMonth = admissionDate.getMonth();
+
+                        for (let year = admissionYear; year <= currentYear; year++) {
+                            let startMonth = (year === admissionYear) ? admissionMonth : 0;
+                            let endMonth = (year === currentYear) ? currentMonth : 11;
+
+                            for (let month = startMonth; month <= endMonth; month++) {
+                                const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+                                if (fees.some(f => f.studentId === student.id && f.month === monthKey)) continue;
+
+                                const newFee = {
+                                    studentId: student.id,
+                                    studentName: student.name,
+                                    month: monthKey,
+                                    amount: student.monthlyFee || 0,
+                                    amountPaid: 0,
+                                    paid: false,
+                                    paidDate: null,
+                                    batch: student.batch,
+                                    course: student.course
+                                };
+
+                                await FirebaseStorage.saveFee(newFee);
+                                fees.push(newFee);
+                                updated = true;
+                            }
+                        }
+                    }
+
+                    if (updated) {
+                        console.log("✅ Generated missing fee records for all students");
+                        DataCache.invalidate('fees');
+                    }
+                } catch (error) {
+                    console.error("Failed to ensure fee records:", error);
+                    showToast("Failed to sync fee records.", "error");
+                }
+            }
+
+            static populateYearFilter() {
+                const currentYear = new Date().getFullYear();
+                const years = [];
+                for (let i = currentYear - 2; i <= currentYear + 1; i++) {
+                    years.push(i);
+                }
+
+                const selectors = document.querySelectorAll('#yearFilter, #feeYear');
+                selectors.forEach(select => {
+                    select.innerHTML = '<option value="">Select Year</option>';
+                    years.forEach(year => {
+                        const option = document.createElement('option');
+                        option.value = year;
+                        option.textContent = year;
+                        select.appendChild(option);
+                    });
+                });
+            }
+
+            static async populateStudentSelect(includeArchived = false) {
+                try {
+                    let students = await DataCache.getStudents();
+                    if (!includeArchived) {
+                        students = students.filter(s => !s.deleted);
+                    }
+
+                    const select = document.getElementById('studentSelect');
+                    if (!select) return;
+
+                    select.innerHTML = '<option value="">Select Student</option>';
+                    if (students.length === 0) {
+                        const opt = document.createElement('option');
+                        opt.value = '';
+                        opt.textContent = includeArchived ? 'No students found' : 'No active students found';
+                        opt.disabled = true;
+                        select.appendChild(opt);
+                        return;
+                    }
+
+                    students.forEach(student => {
+                        const option = document.createElement('option');
+                        option.value = student.id;
+                        option.textContent = `${student.name} (${student.course || 'No Course'})${student.deleted ? ' (Archived)' : ''}`;
+                        option.dataset.monthlyFee = student.monthlyFee || 0;
+                        if (student.deleted) {
+                            option.style.color = '#dc3545'; // Red text for archived
+                        }
+                        select.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error("Failed to populate student select:", error);
+                    showToast("Could not load student list. Please refresh.", "error");
+                    const select = document.getElementById('studentSelect');
+                    if (select) {
+                        select.innerHTML = '<option value="">Error loading students</option>';
+                    }
+                }
+            }
+
+            static async updateAmountDue(studentId) {
+                if (!studentId) {
+                    document.getElementById('amountDue').value = 0;
+                    return;
+                }
+
+                try {
+                    const fees = await DataCache.getFees();
+                    const studentFees = fees.filter(f => f.studentId === studentId && !f.paid);
+                    const totalDue = studentFees.reduce((sum, f) => sum + (f.amount - (f.amountPaid || 0)), 0);
+                    document.getElementById('amountDue').value = totalDue;
+                } catch (error) {
+                    console.error("Failed to calculate due amount:", error);
+                    showToast("Failed to load due amount.", "error");
+                }
+            }
+
+            static openPayFeeModal() {
+                this.populateStudentSelect(); // ← Already here — GOOD!
+                document.getElementById('payFeeForm').reset();
+                document.getElementById('amountDue').value = 0;
+                document.getElementById('payFeeModal').style.display = 'flex';
+            }
+
+            static closePayFeeModal() {
+                document.getElementById('payFeeModal').style.display = 'none';
+            }
+
+            static closeViewPaymentModal() {
+                document.getElementById('viewPaymentModal').style.display = 'none';
+            }
+
+            static isRecording = false; // ← Add at top of Fees class
+
+            static async recordPayment() {
+                if (this.isRecording) {
+                    showToast('Payment recording in progress. Please wait.', 'error');
+                    return;
+                }
+
+                this.isRecording = true;
+
+                const studentId = document.getElementById('studentSelect').value;
+                const amountDue = parseFloat(document.getElementById('amountDue').value);
+                const amountPaid = parseFloat(document.getElementById('amountPaid').value);
+                const paymentMethod = document.getElementById('paymentMethod').value;
+                const paymentNotes = document.getElementById('paymentNotes').value.trim();
+
+                if (!studentId || isNaN(amountDue) || isNaN(amountPaid) || amountPaid <= 0) {
+                    showToast('Please fill all required fields correctly.', 'error');
+                    this.isRecording = false;
+                    return;
+                }
+
+                if (amountPaid > amountDue) {
+                    showToast('Paid amount cannot exceed due amount.', 'error');
+                    this.isRecording = false;
+                    return;
+                }
+
+                try {
+                    let fees = await DataCache.getFees();
+                    const unpaidFees = fees.filter(f => f.studentId === studentId && !f.paid).sort((a, b) => a.month.localeCompare(b.month));
+
+                    let remainingPayment = amountPaid;
+
+                    for (let fee of unpaidFees) {
+                        if (remainingPayment <= 0) break;
+
+                        const outstanding = fee.amount - (fee.amountPaid || 0);
+
+                        if (remainingPayment >= outstanding) {
+                            fee.amountPaid = fee.amount;
+                            fee.paid = true;
+                            fee.paidDate = new Date().toISOString();
+                            fee.paymentMethod = paymentMethod;
+                            fee.paymentNotes = paymentNotes;
+                            remainingPayment -= outstanding;
+                        } else {
+                            fee.amountPaid = (fee.amountPaid || 0) + remainingPayment;
+                            fee.partial = true;
+                            fee.paidDate = new Date().toISOString();
+                            fee.paymentMethod = paymentMethod;
+                            fee.paymentNotes = paymentNotes;
+                            remainingPayment = 0;
+                        }
+
+                        await FirebaseStorage.saveFee(fee); // ← Could also be guarded individually if needed
+                    }
+
+                    DataCache.invalidate('fees');
+
+                    showToast(`Payment of ₹${amountPaid.toLocaleString()} recorded successfully!`, 'success');
+
+                    // >>> NEW: Auto-refresh All Students if user is viewing it <<<
+                    if (App.getCurrentSection() === 'all-students') {
+                        await AllStudents.renderAllStudents();
+                    }
+
+                    await this.renderFeeRecords(); // ← Already there
+                    this.closePayFeeModal();
+                    await this.renderFeeRecords();
+                    this.closePayFeeModal();
+                } catch (error) {
+                    console.error("Failed to record payment:", error);
+                    showToast('Failed to save payment: ' + error.message, 'error');
+                } finally {
+                    this.isRecording = false;
+                }
+            }
+
+            static async renderFeeRecords(searchTerm = '', statusFilter = '', monthFilter = '', yearFilter = '') {
+                try {
+                    await this.ensureFeeRecordsForAllStudents();
+
+                    let fees = await DataCache.getFees();
+
+                    if (searchTerm) {
+                        const term = searchTerm.toLowerCase();
+                        fees = fees.filter(f =>
+                            f.studentName.toLowerCase().includes(term) ||
+                            f.studentId.toLowerCase().includes(term)
+                        );
+                    }
+
+                    if (statusFilter) {
+                        if (statusFilter === 'paid') {
+                            fees = fees.filter(f => f.paid);
+                        } else if (statusFilter === 'unpaid') {
+                            fees = fees.filter(f => !f.paid && (!f.amountPaid || f.amountPaid === 0));
+                        } else if (statusFilter === 'partial') {
+                            fees = fees.filter(f => f.partial);
+                        }
+                    }
+
+                    if (monthFilter !== '' && monthFilter !== null) {
+                        const filterMonth = String(Number(monthFilter) + 1).padStart(2, '0');
+                        fees = fees.filter(f => f.month.endsWith(`-${filterMonth}`));
+                    }
+
+                    if (yearFilter) {
+                        fees = fees.filter(f => f.month.startsWith(yearFilter));
+                    }
+
+                    const tbody = document.getElementById('feesTableBody');
+                    if (!tbody) return;
+
+                    if (fees.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="9" class="no-data">No fee records found.</td></tr>`;
+                    } else {
+                        tbody.innerHTML = fees.map(fee => {
+                            const statusClass = fee.paid ? 'status-paid' : fee.partial ? 'status-partial' : 'status-unpaid';
+                            const statusText = fee.paid ? 'Paid' : fee.partial ? 'Partial' : 'Unpaid';
+
+                            return `
+                        <tr>
+                            <td>${fee.studentId.substring(0, 6).toUpperCase()}</td>
+                            <td>${fee.studentName}</td>
+                            <td>${fee.batch}</td>
+                            <td>${this.formatMonthYear(fee.month)}</td>
+                            <td>₹${fee.amount.toLocaleString()}</td>
+                            <td>₹${(fee.amountPaid || 0).toLocaleString()}</td>
+                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                            <td>${fee.paidDate ? formatDate(fee.paidDate) : '-'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="Fees.viewPaymentDetails(${JSON.stringify(fee).replace(/"/g, '&quot;')})">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                        }).join('');
+                    }
+
+                    await this.updateSummaryCards();
+                } catch (error) {
+                    console.error("Failed to render fee records:", error);
+                    showToast("Failed to load fee records.", "error");
+                }
+            }
+
+            static formatMonthYear(monthKey) {
+                const [year, month] = monthKey.split('-');
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                return `${monthNames[parseInt(month) - 1]} ${year}`;
+            }
+
+            static async updateSummaryCards() {
+                try {
+                    const fees = await DataCache.getFees();
+                    const totalAmount = fees.reduce((sum, f) => sum + f.amount, 0);
+                    const paidAmount = fees.reduce((sum, f) => sum + (f.amountPaid || 0), 0);
+                    const outstanding = totalAmount - paidAmount;
+
+                    document.getElementById('totalAmount').textContent = `₹${totalAmount.toLocaleString()}`;
+                    document.getElementById('paidAmount').textContent = `₹${paidAmount.toLocaleString()}`;
+                    document.getElementById('outstandingAmount').textContent = `₹${outstanding.toLocaleString()}`;
+                } catch (error) {
+                    console.error("Failed to update summary cards:", error);
+                }
+            }
+
+            static applyFilters(searchTerm = '') {
+                const statusFilter = document.getElementById('feeStatusFilter')?.value || '';
+                const monthFilter = document.getElementById('monthFilter')?.value || '';
+                const yearFilter = document.getElementById('yearFilter')?.value || '';
+                this.renderFeeRecords(searchTerm, statusFilter, monthFilter, yearFilter);
+            }
+
+            static viewPaymentDetails(fee) {
+                const content = document.getElementById('paymentDetailsContent');
+                if (!content) return;
+
+                content.innerHTML = `
+            <div style="display: grid; gap: 15px; padding: 20px; font-size: 1rem;">
+                <div><strong>Student:</strong> ${fee.studentName}</div>
+                <div><strong>Batch:</strong> ${fee.batch}</div>
+                <div><strong>Course:</strong> ${fee.course}</div>
+                <div><strong>Period:</strong> ${this.formatMonthYear(fee.month)}</div>
+                <div><strong>Amount Due:</strong> ₹${fee.amount.toLocaleString()}</div>
+                <div><strong>Amount Paid:</strong> ₹${(fee.amountPaid || 0).toLocaleString()}</div>
+                <div><strong>Status:</strong> <span class="status-badge ${fee.paid ? 'status-paid' : fee.partial ? 'status-partial' : 'status-unpaid'
+                    }">${fee.paid ? 'Paid' : fee.partial ? 'Partial Payment' : 'Unpaid'}</span></div>
+                ${fee.paidDate ? `<div><strong>Paid On:</strong> ${formatDate(fee.paidDate)}</div>` : ''}
+                ${fee.paymentMethod ? `<div><strong>Method:</strong> ${this.formatPaymentMethod(fee.paymentMethod)}</div>` : ''}
+                ${fee.paymentNotes ? `<div><strong>Notes:</strong> ${fee.paymentNotes}</div>` : ''}
+            </div>
+        `;
+
+                document.getElementById('viewPaymentModal').style.display = 'flex';
+            }
+            static async recordPaymentForArchivedStudent(studentId, studentName) {
+                // Open the Pay Fee Modal first
+                this.openPayFeeModal();
+
+                // Wait for modal to render (next tick)
+                setTimeout(() => {
+                    const select = document.getElementById('studentSelect');
+                    if (!select) {
+                        console.error("Student select not found");
+                        return;
+                    }
+
+                    // Check if option already exists (avoid duplicates if clicked twice)
+                    let existingOption = Array.from(select.options).find(opt => opt.value === studentId);
+                    if (!existingOption) {
+                        // Create new option for archived student
+                        const option = document.createElement('option');
+                        option.value = studentId;
+                        option.textContent = `${studentName} (Archived)`;
+                        option.dataset.archived = "true"; // Optional flag for styling
+                        select.appendChild(option);
+                    }
+
+                    // Select it
+                    select.value = studentId;
+
+                    // Trigger amount due calculation
+                    this.updateAmountDue(studentId);
+                }, 50);
+            }
+            static formatPaymentMethod(methodKey) {
+                const map = { cash: 'Cash', bank_transfer: 'Bank Transfer', upi: 'UPI', card: 'Card' };
+                return map[methodKey] || methodKey;
+            }
+        }
+
+        // =============================
+        // 👥 ALL STUDENTS MODULE (Archived + Active)
+        // =============================
+        class AllStudents {
+            static async init() {
+                await this.renderAllStudents();
+                this.bindEvents();
+            }
+
+            static bindEvents() {
+                document.getElementById('searchAllStudents')?.addEventListener('input', (e) => {
+                    this.filterStudents(e.target.value);
+                });
+            }
+
+            static async renderAllStudents(filterText = '') {
+                try {
+                    let students = await DataCache.getStudents();
+                    const fees = await DataCache.getFees(); // ← Load fees too
+
+                    // Precompute financial summary for each student
+                    students = students.map(s => {
+                        const studentFees = fees.filter(f => f.studentId === s.id);
+                        const totalDue = studentFees.reduce((sum, f) => sum + (f.amount || 0), 0);
+                        const totalPaid = studentFees.reduce((sum, f) => sum + (f.amountPaid || 0), 0);
+                        return {
+                            ...s,
+                            totalDue,
+                            totalPaid,
+                            outstanding: totalDue - totalPaid
+                        };
+                    });
+
+                    if (filterText) {
+                        const term = filterText.toLowerCase();
+                        students = students.filter(s =>
+                            (s.name?.toLowerCase().includes(term)) ||
+                            (s.fatherName?.toLowerCase().includes(term))
+                        );
+                    }
+
+                    const tbody = document.getElementById('allStudentsTableBody');
+                    if (!tbody) return;
+
+                    if (students.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="11">No students found.</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = students.map(s => `
+    <tr class="${s.deleted ? 'table-danger' : ''}">
+        <td>${s.id?.substring(0, 6).toUpperCase() || '—'}</td>
+        <td>${s.name || '—'}</td>
+        <td>${s.fatherName || '—'}</td>
+        <td>${s.phone || '—'}</td> <!-- 👈 NEW -->
+        <td>${s.course || '—'}</td>
+        <td>${s.batch || '—'}</td>
+        <td>${formatDate(s.admissionDate) || '—'}</td>
+        <td>₹${s.totalDue.toLocaleString()}</td>
+        <td>₹${s.totalPaid.toLocaleString()}</td>
+        <td>₹${s.outstanding.toLocaleString()}</td>
+        <td>
+            <span class="badge ${s.deleted ? 'bg-danger' : 'bg-success'}">
+                ${s.deleted ? 'Archived' : 'Active'}
+            </span>
+            ${s.deleted ? `
+                <button class="btn btn-xs btn-outline-primary ms-2" onclick="Fees.recordPaymentForArchivedStudent('${s.id}', '${(s.name || '').replace(/'/g, "\\'").replace(/"/g, "&quot;")}')">
+                    <i class="fas fa-money-bill"></i> Record Payment
+                </button>
+            ` : ''}
+        </td>
+    </tr>
+`).join('');
+
+                } catch (error) {
+                    console.error(error);
+                    showToast('Failed to load all students.', 'error');
+                }
+            }
+
+            static filterStudents(query) {
+                this.renderAllStudents(query);
+            }
+        }
+
+        // Expose modules globally for HTML onclick handlers
+        window.App = App;
+        window.Auth = Auth;
+        window.Dashboard = Dashboard;
+        window.Students = Students;
+        window.Batches = Batches;
+        window.Fees = Fees;
+        window.AllStudents = AllStudents;
+
+        // Start App on DOM Ready
+        document.addEventListener('DOMContentLoaded', () => {
+            App.init();
+        });
+
+        console.log("✅ EduManage Single-File SPA Loaded Successfully.");
+    </script>
+</body>
+
+</html>
