@@ -43,10 +43,10 @@
                     <h1 id="page-title">Dashboard</h1>
                 </div>
                 <div class="header-right">
-                    <div class="user-profile">
-                        <i class="fas fa-user-circle"></i>
-                        <span id="user-email">Loading...</span>
-                    </div>
+                    <div class="user-profile"> <i class="fas fa-user-circle"></i> <span
+                            id="user-email">Loading...</span> <button onclick="Auth.logout()" class="btn btn-link"
+                            style="color: #fff; margin-left: 10px;"> <i class="fas fa-sign-out-alt"></i> Logout
+                        </button> </div>
                 </div>
             </header>
 
@@ -508,14 +508,44 @@
             </div>
         </div>
     </div>
+    <!-- Confirm Password Modal -->
+<div class="modal" id="confirmPasswordModal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Confirm Deletion</h3>
+            <button class="close-btn" id="closePasswordModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>⚠️ This will permanently delete the student record. Enter your password to confirm:</p>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="confirmPassword">Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Enter your password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                    <button type="button" class="btn btn-secondary" id="cancelPasswordBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
     <script type="module">
         // ============================= 
         // 🔥 FIREBASE CONFIGURATION 
         // ============================= 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
+       import { 
+    getAuth, 
+    signInWithEmailAndPassword, 
+    signOut, 
+    onAuthStateChanged, 
+    GoogleAuthProvider, 
+    signInWithPopup,
+    EmailAuthProvider,           // ← ADD THIS
+    reauthenticateWithCredential // ← ADD THIS
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         const firebaseConfig = {
             apiKey: "AIzaSyCJhbTQ5ZwLhakUQBGpclZVsZG0V8-qWhs",
             authDomain: "stylestock.firebaseapp.com",
@@ -524,6 +554,7 @@
             messagingSenderId: "508467185521",
             appId: "1:508467185521:web:71d911a1aff8987cc358d0"
         };
+        let CURRENT_USER_ID = null;
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -562,15 +593,48 @@
         // 💾 FIREBASE STORAGE LAYER (Replaces firebase-utils.js) 
         // ============================= 
         class FirebaseStorage {
-            static async getStudents() { const snapshot = await getDocs(collection(db, "students")); return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); }
-            static async saveStudent(student) { if (student.id) { await updateDoc(doc(db, "students", student.id), student); } else { const docRef = await addDoc(collection(db, "students"), student); student.id = docRef.id; } return student; }
+            static async getStudents() {
+                const q = query(collection(db, "students"), where("ownerId", "==", CURRENT_USER_ID));
+                const snapshot = await getDocs(q);
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } static async saveStudent(student) {
+                student.ownerId = CURRENT_USER_ID; // 👈 ATTACH OWNER ID
+                if (student.id) {
+                    await updateDoc(doc(db, "students", student.id), student);
+                } else {
+                    const docRef = await addDoc(collection(db, "students"), student);
+                    student.id = docRef.id;
+                }
+                return student;
+            }
             static async archiveStudent(id) { await updateDoc(doc(db, "students", id), { deleted: true }); }
-            static async getBatches() { const snapshot = await getDocs(collection(db, "batches")); return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); }
-            static async saveBatch(batch) { if (batch.id) { await updateDoc(doc(db, "batches", batch.id), batch); } else { const docRef = await addDoc(collection(db, "batches"), batch); batch.id = docRef.id; } return batch; }
-            static async deleteBatch(id) { await deleteDoc(doc(db, "batches", id)); }
-            static async getFees() { const snapshot = await getDocs(collection(db, "fees")); return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); }
-            static async saveFee(fee) {
-                if (fee.id && fee.id.startsWith('_')) delete fee.id; // client-generated temp ID
+      static async getBatches() {
+    const q = query(
+        collection(db, "batches"),
+        where("ownerId", "==", CURRENT_USER_ID)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '')); // ← SORT BY NAME
+}
+            static async saveBatch(batch) {
+                batch.ownerId = CURRENT_USER_ID; // 👈 ATTACH OWNER ID
+                if (batch.id) {
+                    await updateDoc(doc(db, "batches", batch.id), batch);
+                } else {
+                    const docRef = await addDoc(collection(db, "batches"), batch);
+                    batch.id = docRef.id;
+                }
+                return batch;
+            } static async deleteBatch(id) { await deleteDoc(doc(db, "batches", id)); }
+            static async getFees() {
+                const q = query(collection(db, "fees"), where("ownerId", "==", CURRENT_USER_ID));
+                const snapshot = await getDocs(q);
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } static async saveFee(fee) {
+                fee.ownerId = CURRENT_USER_ID; // 👈 ATTACH OWNER ID
+                if (fee.id && fee.id.startsWith('_')) delete fee.id;
                 if (fee.id) {
                     await updateDoc(doc(db, "fees", fee.id), fee);
                 } else {
@@ -622,6 +686,8 @@
             static async logout() {
                 try {
                     await signOut(auth);
+                    CURRENT_USER_ID = null;           // Reset user ID
+                    DataCache.invalidate();           // Clear cache
                     console.log("🚪 User logged out");
                     window.location.href = 'login.html';
                 } catch (error) {
@@ -639,47 +705,57 @@
         class App {
             static _initialized = false;
             static async init() { if (this._initialized) return; this._initialized = true; console.log("🚀 EduManage Single-Page App Initializing..."); if (document.readyState !== 'loading') this.onDOMReady(); else document.addEventListener('DOMContentLoaded', () => this.onDOMReady()); }
-            static async onDOMReady() {
-                // Preload data 
-                if (!window.location.pathname.includes('login.html')) {
-                    Promise.all([
-                        DataCache.getBatches().catch(console.warn),
-                        DataCache.getStudents().catch(console.warn),
-                        DataCache.getFees().catch(console.warn)
-                    ]);
-                }
-                await this.initializeAuth();
-                if (!window.location.pathname.includes('login.html')) {
-                    this.setupNavigation();
-                    this.setupGlobalUI();
-                }
-                this.handleInitialRoute();
-                window.addEventListener('hashchange', () => {
-                    const sectionId = location.hash.substring(1) || 'dashboard';
-                    this.showSection(sectionId);
-                });
-            }
+           static async onDOMReady() {
+    // 👇 WAIT for auth to complete BEFORE preloading
+    await this.initializeAuth();
+
+    // 👇 NOW preload data (CURRENT_USER_ID is set)
+    if (!window.location.pathname.includes('login.html')) {
+        await Promise.all([
+            DataCache.getBatches().catch(console.warn),
+            DataCache.getStudents().catch(console.warn),
+            DataCache.getFees().catch(console.warn)
+        ]);
+        
+        this.setupNavigation();
+        this.setupGlobalUI();
+    }
+
+    this.handleInitialRoute();
+    window.addEventListener('hashchange', () => {
+        const sectionId = location.hash.substring(1) || 'dashboard';
+        this.showSection(sectionId);
+    });
+}
             static async initializeAuth() {
-                return new Promise(resolve => {
-                    Auth.onAuthStateChanged(async (user) => {
-                        const isLoginPage = window.location.pathname.includes('login.html');
-                        if (!user && !isLoginPage) {
-                            window.location.href = 'login.html';
-                            resolve();
-                            return;
-                        }
-                        if (user && isLoginPage) {
-                            window.location.href = 'index.html'; // or dashboard.html 
-                            resolve();
-                            return;
-                        }
-                        if (user && document.getElementById('user-email')) {
-                            document.getElementById('user-email').textContent = user.email;
-                        }
-                        resolve();
-                    });
-                });
+    return new Promise(resolve => {
+        Auth.onAuthStateChanged(async (user) => {
+            const isLoginPage = window.location.pathname.includes('login.html');
+
+            if (!user && !isLoginPage) {
+                window.location.href = 'login.html';
+                resolve();
+                return;
             }
+
+            if (user && isLoginPage) {
+                window.location.href = 'index.html';
+                resolve();
+                return;
+            }
+
+            if (user && document.getElementById('user-email')) {
+                document.getElementById('user-email').textContent = user.email;
+                CURRENT_USER_ID = user.uid; // 👈 Set BEFORE resolving
+                console.log("✅ Authenticated as:", user.email, "| UID:", user.uid);
+            } else {
+                CURRENT_USER_ID = null;
+            }
+
+            resolve(); // 👈 Resolve AFTER setting CURRENT_USER_ID
+        });
+    });
+}
             static setupNavigation() {
                 document.querySelectorAll('.nav-link').forEach(link => {
                     link.addEventListener('click', (e) => {
@@ -782,11 +858,25 @@
             }
             static async renderBatchDistributionChart() {
                 try {
-                    const students = (await DataCache.getStudents()).filter(s => !s.deleted);
-                    const batchCounts = {};
-                    students.forEach(s => {
-                        batchCounts[s.batch] = (batchCounts[s.batch] || 0) + 1;
-                    });
+                    const [students, batches] = await Promise.all([
+    DataCache.getStudents(),
+    DataCache.getBatches()
+]);
+
+// Create a map: batchId → batchName
+const batchMap = {};
+batches.forEach(b => {
+    batchMap[b.id] = b.name || 'Unnamed Batch';
+});
+
+// Count students per batch, but store by NAME
+const batchCounts = {};
+students
+    .filter(s => !s.deleted && s.batch)
+    .forEach(s => {
+        const batchName = batchMap[s.batch] || 'Unknown Batch';
+        batchCounts[batchName] = (batchCounts[batchName] || 0) + 1;
+    });
                     const canvas = document.getElementById('batchDistributionChart');
                     if (!canvas) return;
                     const ctx = canvas.getContext('2d');
@@ -1012,65 +1102,74 @@
                 document.getElementById('addStudentModal').style.display = 'none';
             }
             static async renderStudents(filterText = '', batchFilter = '', courseFilter = '') {
-                try {
-                    let students = (await DataCache.getStudents()).filter(s => !s.deleted);
+    try {
+        let students = (await DataCache.getStudents()).filter(s => !s.deleted);
 
-                    // >>> NEW: Populate Batch Filter <<<
-                    const batchSelect = document.getElementById('filterByBatch');
-                    if (batchSelect) {
-                        const batches = await DataCache.getBatches();
-                        // Keep "All Batches" as first option
-                        batchSelect.innerHTML = '<option value="">All Batches</option>';
-                        batches.forEach(b => {
-                            const opt = document.createElement('option');
-                            opt.value = b.id;
-                            opt.textContent = b.name || 'Unnamed Batch';
-                            if (b.id === batchFilter) opt.selected = true;
-                            batchSelect.appendChild(opt);
-                        });
-                    }
+        // >>> NEW: Create Batch ID → Name Map <<<
+        const batches = await DataCache.getBatches();
+        const batchMap = {};
+        batches.forEach(b => {
+            batchMap[b.id] = b.name || 'Unnamed Batch';
+        });
 
-                    // >>> NEW: Populate Course Filter <<<
-                    const courseSelect = document.getElementById('filterByCourse');
-                    if (courseSelect) {
-                        // Extract unique courses from active students
-                        const uniqueCourses = [...new Set(students.map(s => s.course).filter(Boolean))];
-                        courseSelect.innerHTML = '<option value="">All Courses</option>';
-                        uniqueCourses.forEach(course => {
-                            const opt = document.createElement('option');
-                            opt.value = course;
-                            opt.textContent = course;
-                            if (course === courseFilter) opt.selected = true;
-                            courseSelect.appendChild(opt);
-                        });
-                    }
+        // >>> Populate Batch Filter <<<
+        const batchSelect = document.getElementById('filterByBatch');
+        if (batchSelect) {
+            batchSelect.innerHTML = '<option value="">All Batches</option>';
+            batches.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.name || 'Unnamed Batch';
+                if (b.id === batchFilter) opt.selected = true;
+                batchSelect.appendChild(opt);
+            });
+        }
 
-                    // Apply filters
-                    if (filterText) {
-                        const term = filterText.toLowerCase();
-                        students = students.filter(s =>
-                            (s.name?.toLowerCase().includes(term)) ||
-                            (s.fatherName?.toLowerCase().includes(term))
-                        );
-                    }
-                    if (batchFilter) students = students.filter(s => s.batch === batchFilter);
-                    if (courseFilter) students = students.filter(s => s.course === courseFilter);
+        // >>> Populate Course Filter <<<
+        const courseSelect = document.getElementById('filterByCourse');
+        if (courseSelect) {
+            const uniqueCourses = [...new Set(students.map(s => s.course).filter(Boolean))];
+            courseSelect.innerHTML = '<option value="">All Courses</option>';
+            uniqueCourses.forEach(course => {
+                const opt = document.createElement('option');
+                opt.value = course;
+                opt.textContent = course;
+                if (course === courseFilter) opt.selected = true;
+                courseSelect.appendChild(opt);
+            });
+        }
 
-                    const tbody = document.getElementById('studentsTableBody');
-                    if (!tbody) return;
+        // Apply search filter
+        if (filterText) {
+            const term = filterText.toLowerCase();
+            students = students.filter(s =>
+                (s.name?.toLowerCase().includes(term)) ||
+                (s.fatherName?.toLowerCase().includes(term))
+            );
+        }
 
-                    if (students.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="8">No active students found.</td></tr>';
-                        return;
-                    }
+        // Apply batch filter
+        if (batchFilter) students = students.filter(s => s.batch === batchFilter);
 
-                    tbody.innerHTML = students.map(s => `
+        // Apply course filter
+        if (courseFilter) students = students.filter(s => s.course === courseFilter);
+
+        const tbody = document.getElementById('studentsTableBody');
+        if (!tbody) return;
+
+        if (students.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8">No active students found.</td></tr>';
+            return;
+        }
+
+        // Render table rows with readable batch names
+        tbody.innerHTML = students.map(s => `
             <tr>
                 <td>${s.id?.substring(0, 6).toUpperCase() || '—'}</td>
                 <td>${s.name || '—'}</td>
                 <td>${s.fatherName || '—'}</td>
                 <td>${s.course || '—'}</td>
-                <td>${s.batch || '—'}</td>
+                <td>${batchMap[s.batch] || '—'}</td> <!-- 👈 FIXED: Show batch NAME instead of ID -->
                 <td>₹${(s.monthlyFee || 0).toLocaleString()}</td>
                 <td>${formatDate(s.admissionDate) || '—'}</td>
                 <td>
@@ -1084,11 +1183,11 @@
             </tr>
         `).join('');
 
-                } catch (error) {
-                    console.error(error);
-                    showToast('Failed to load students.', 'error');
-                }
-            }
+    } catch (error) {
+        console.error(error);
+        showToast('Failed to load students.', 'error');
+    }
+}
             static filterStudents(query) {
                 const b = document.getElementById('filterByBatch')?.value || '';
                 const c = document.getElementById('filterByCourse')?.value || '';
@@ -1133,44 +1232,44 @@
                 document.getElementById('cancelUpdateBatchBtn')?.addEventListener('click', () => this.closeUpdateStudentBatchModal());
                 document.getElementById('closeUpdateBatchModal')?.addEventListener('click', () => this.closeUpdateStudentBatchModal());
             }
-            static async renderBatchSelector() {
-                try {
-                    const selector = document.getElementById('batchSelector');
-                    if (!selector) return;
-                    selector.innerHTML = '<option value="">Loading...</option>';
-                    selector.disabled = true;
-                    const batches = await DataCache.getBatches();
-                    selector.disabled = false;
-                    selector.innerHTML = batches.length === 0 ? '<option value="">No batches — add one</option>' : '<option value="">Select a Batch</option>';
-                    batches.forEach(b => {
-                        const opt = document.createElement('option');
-                        opt.value = b.id;
-                        opt.textContent = b.name || 'Unnamed';
-                        selector.appendChild(opt);
-                    }); const newBatchSelect = document.getElementById('newBatch');
-                    if (newBatchSelect) {
-                        newBatchSelect.innerHTML = '<option value="">Select Batch</option>';
-                        batches.forEach(b => {
-                            const opt = document.createElement('option');
-                            opt.value = b.id;
-                            opt.textContent = b.name;
-                            newBatchSelect.appendChild(opt);
-                        });
-                    }
-                    if (batches.length === 1) {
-                        selector.value = batches[0].id;
-                        this.loadBatchDetails(batches[0].id);
-                    }
-                } catch (error) {
-                    console.error(error);
-                    showToast("Failed to load batches.", "error");
-                    const s = document.getElementById('batchSelector');
-                    if (s) {
-                        s.innerHTML = '<option value="">Error loading</option>';
-                        s.disabled = false;
-                    }
-                }
-            }
+         static async renderBatchSelector() {
+    try {
+        const selector = document.getElementById('batchSelector');
+        if (!selector) return;
+        selector.innerHTML = '<option value="">Loading...</option>';
+        selector.disabled = true;
+        const batches = await DataCache.getBatches();
+        selector.disabled = false;
+        selector.innerHTML = batches.length === 0 ? '<option value="">No batches — add one</option>' : '<option value="">Select a Batch</option>';
+        batches.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b.id;
+            opt.textContent = b.name || 'Unnamed';
+            selector.appendChild(opt);
+        }); const newBatchSelect = document.getElementById('newBatch');
+        if (newBatchSelect) {
+            newBatchSelect.innerHTML = '<option value="">Select Batch</option>';
+            batches.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.name;
+                newBatchSelect.appendChild(opt);
+            });
+        }
+        if (batches.length === 1) {
+            selector.value = batches[0].id;
+            this.loadBatchDetails(batches[0].id);
+        }
+    } catch (error) {
+        console.error(error);
+        showToast("Failed to load batches.", "error");
+        const s = document.getElementById('batchSelector');
+        if (s) {
+            s.innerHTML = '<option value="">Error loading</option>';
+            s.disabled = false;
+        }
+    }
+}
 
             static async loadBatchDetails(batchId) {
                 if (!batchId) {
@@ -1266,58 +1365,72 @@
 
             static isSaving = false; // ← Add at top of Batches class
 
-            static async saveBatch() {
-                if (this.isSaving) {
-                    showToast('Please wait... saving in progress.', 'error');
-                    return;
-                }
+           static async saveBatch() {
+    if (this.isSaving) {
+        showToast('Please wait... saving in progress.', 'error');
+        return;
+    }
 
-                this.isSaving = true;
+    this.isSaving = true;
 
-                const form = document.getElementById('batchForm');
-                const batchName = form.batchName.value.trim();
-                const timing = form.timing.value.trim();
-                const batchId = form.batchId.value.trim();
+    const form = document.getElementById('batchForm');
+    const batchName = form.batchName.value.trim();
+    const timing = form.timing.value.trim();
+    const batchId = form.batchId.value.trim();
 
-                if (!batchName) {
-                    showToast('Batch name is required.', 'error');
-                    this.isSaving = false;
-                    return;
-                }
+    if (!batchName) {
+        showToast('Batch name is required.', 'error');
+        this.isSaving = false;
+        return;
+    }
 
-                const batchObj = {
-                    name: batchName,
-                    timing: timing || '',
-                    createdAt: new Date().toISOString()
-                };
+    const batchObj = {
+        name: batchName,
+        timing: timing || '',
+        createdAt: new Date().toISOString()
+    };
 
-                try {
-                    let result;
-                    if (batchId) {
-                        batchObj.id = batchId;
-                        result = await FirebaseStorage.saveBatch(batchObj);
-                        showToast('Batch updated successfully!', 'success');
-                    } else {
-                        result = await FirebaseStorage.saveBatch(batchObj);
-                        showToast('Batch added successfully!', 'success');
-                    }
+    try {
+        let result;
+        if (batchId) {
+            batchObj.id = batchId;
+            result = await FirebaseStorage.saveBatch(batchObj);
+            showToast('Batch updated successfully!', 'success');
+        } else {
+            result = await FirebaseStorage.saveBatch(batchObj);
+            showToast('Batch added successfully!', 'success');
+        }
 
-                    await this.renderBatchSelector();
+        // 👇 CRITICAL FIX: Invalidate cache BEFORE reloading
+        DataCache.invalidate('batches');
+        
+        // 👇 Wait for fresh data to be loaded
+        await this.renderBatchSelector();
 
-                    this.closeBatchModal();
+        this.closeBatchModal();
 
-                    const currentBatchId = document.getElementById('batchSelector')?.value;
-                    if (currentBatchId === (result.id || batchId)) {
-                        await this.loadBatchDetails(currentBatchId);
-                    }
-
-                } catch (error) {
-                    console.error("❌ Failed to save batch:", error);
-                    showToast('Failed to save batch: ' + (error.message || 'Unknown error'), 'error');
-                } finally {
-                    this.isSaving = false;
-                }
+        // If this was a new batch, auto-select it
+        if (!batchId && result?.id) {
+            const selector = document.getElementById('batchSelector');
+            if (selector) {
+                selector.value = result.id;
+                await this.loadBatchDetails(result.id);
             }
+        } else {
+            // For edit, refresh current batch if it's the one being edited
+            const currentBatchId = document.getElementById('batchSelector')?.value;
+            if (currentBatchId === (result.id || batchId)) {
+                await this.loadBatchDetails(currentBatchId);
+            }
+        }
+
+    } catch (error) {
+        console.error("❌ Failed to save batch:", error);
+        showToast('Failed to save batch: ' + (error.message || 'Unknown error'), 'error');
+    } finally {
+        this.isSaving = false;
+    }
+}
 
             static async deleteCurrentBatch() {
                 const selector = document.getElementById('batchSelector');
@@ -1332,15 +1445,30 @@
                     return;
                 }
 
-                try {
-                    await FirebaseStorage.deleteBatch(batchId);
-                    showToast('Batch deleted successfully!', 'success');
-                    await this.renderBatchSelector();
-                    this.clearBatchDetails();
-                } catch (error) {
-                    console.error("❌ Failed to delete batch:", error);
-                    showToast('Failed to delete batch: ' + error.message, 'error');
-                }
+               try {
+    await FirebaseStorage.deleteBatch(batchId);
+    showToast('Batch deleted successfully!', 'success');
+
+    // 👇 CRITICAL: Invalidate BEFORE reloading
+    DataCache.invalidate('batches');
+
+    // 👇 Wait for fresh data and re-render selector
+    await this.renderBatchSelector();
+
+    // 👇 Clear current batch details (since deleted batch shouldn't be shown)
+    this.clearBatchDetails();
+
+    // 👇 Auto-select first batch if any exists
+    const selector = document.getElementById('batchSelector');
+    if (selector && selector.options.length > 1) { // >1 because first is placeholder
+        selector.selectedIndex = 1; // Select first real batch
+        await this.loadBatchDetails(selector.value);
+    }
+
+} catch (error) {
+    console.error("❌ Failed to delete batch:", error);
+    showToast('Failed to delete batch: ' + error.message, 'error');
+}
             }
 
             static openUpdateStudentBatchModal(studentId) {
@@ -1803,81 +1931,195 @@
         // 👥 ALL STUDENTS MODULE (Archived + Active)
         // =============================
         class AllStudents {
-            static async init() {
-                await this.renderAllStudents();
-                this.bindEvents();
+            // Add at top of AllStudents class (with other static properties)
+static currentDeleteStudentId = null;
+static currentDeleteStudentName = null;
+
+static confirmPermanentDelete(studentId, studentName) {
+    if (!studentId) {
+        showToast('Invalid student.', 'error');
+        return;
+    }
+    
+    this.currentDeleteStudentId = studentId;
+    this.currentDeleteStudentName = studentName;
+    
+    const modal = document.getElementById('confirmPasswordModal');
+    document.getElementById('passwordForm').reset();
+    modal.style.display = 'flex';
+}static async permanentDeleteStudent(studentId, studentName) {
+    if (!confirm(`Are you absolutely sure you want to permanently delete "${studentName}"? This cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        // First, delete all associated fee records
+        const fees = await DataCache.getFees();
+        const studentFees = fees.filter(f => f.studentId === studentId);
+        
+        // Delete each fee record
+        for (const fee of studentFees) {
+            await deleteDoc(doc(db, "fees", fee.id));
+        }
+
+        // Then delete the student document
+        await deleteDoc(doc(db, "students", studentId));
+
+        // Invalidate caches
+        DataCache.invalidate('students');
+        DataCache.invalidate('fees');
+
+        showToast(`✅ Student "${studentName}" permanently deleted.`, 'success');
+
+        // Refresh view
+        await this.renderAllStudents();
+
+    } catch (error) {
+        console.error("Failed to permanently delete student:", error);
+        showToast('Failed to delete student: ' + error.message, 'error');
+    }
+}
+
+static bindPasswordModalEvents() {
+    // Close modal
+    document.getElementById('closePasswordModal')?.addEventListener('click', () => {
+        document.getElementById('confirmPasswordModal').style.display = 'none';
+    });
+    
+    document.getElementById('cancelPasswordBtn')?.addEventListener('click', () => {
+        document.getElementById('confirmPasswordModal').style.display = 'none';
+    });
+
+    // Handle form submission
+    document.getElementById('passwordForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const passwordInput = document.getElementById('confirmPassword');
+        const password = passwordInput.value.trim();
+        
+        if (!password) {
+            showToast('Please enter your password.', 'error');
+            return;
+        }
+
+        try {
+            // Get current user
+            const user = auth.currentUser;
+            if (!user || !user.email) {
+                throw new Error('No authenticated user found.');
             }
+
+            // Re-authenticate
+            const credential = EmailAuthProvider.credential(user.email, password);
+            await reauthenticateWithCredential(user, credential);
+
+            // Password correct → proceed to delete
+            await this.permanentDeleteStudent(this.currentDeleteStudentId, this.currentDeleteStudentName);
+
+            // Close modal
+            document.getElementById('confirmPasswordModal').style.display = 'none';
+
+        } catch (error) {
+            console.error("Password verification failed:", error);
+            if (error.code === 'auth/wrong-password') {
+                showToast('Incorrect password. Please try again.', 'error');
+            } else if (error.code === 'auth/too-many-requests') {
+                showToast('Too many attempts. Try again later.', 'error');
+            } else {
+                showToast('Authentication failed: ' + error.message, 'error');
+            }
+        }
+    });
+}
+          static async init() {
+    await this.renderAllStudents();
+    this.bindEvents();
+    this.bindPasswordModalEvents(); // ← ADD THIS LINE
+}
 
             static bindEvents() {
                 document.getElementById('searchAllStudents')?.addEventListener('input', (e) => {
                     this.filterStudents(e.target.value);
                 });
             }
+static async renderAllStudents(filterText = '') {
+    try {
+        const [studentsRaw, fees, batches] = await Promise.all([
+            DataCache.getStudents(),
+            DataCache.getFees(),
+            DataCache.getBatches()
+        ]);
 
-            static async renderAllStudents(filterText = '') {
-                try {
-                    let students = await DataCache.getStudents();
-                    const fees = await DataCache.getFees(); // ← Load fees too
+        // Create batch ID → Name map
+        const batchMap = {};
+        batches.forEach(b => {
+            batchMap[b.id] = b.name || 'Unnamed Batch';
+        });
 
-                    // Precompute financial summary for each student
-                    students = students.map(s => {
-                        const studentFees = fees.filter(f => f.studentId === s.id);
-                        const totalDue = studentFees.reduce((sum, f) => sum + (f.amount || 0), 0);
-                        const totalPaid = studentFees.reduce((sum, f) => sum + (f.amountPaid || 0), 0);
-                        return {
-                            ...s,
-                            totalDue,
-                            totalPaid,
-                            outstanding: totalDue - totalPaid
-                        };
-                    });
+        // Attach financials + resolve batch name
+        let students = studentsRaw.map(s => {
+            const studentFees = fees.filter(f => f.studentId === s.id);
+            const totalDue = studentFees.reduce((sum, f) => sum + (f.amount || 0), 0);
+            const totalPaid = studentFees.reduce((sum, f) => sum + (f.amountPaid || 0), 0);
 
-                    if (filterText) {
-                        const term = filterText.toLowerCase();
-                        students = students.filter(s =>
-                            (s.name?.toLowerCase().includes(term)) ||
-                            (s.fatherName?.toLowerCase().includes(term))
-                        );
-                    }
+            return {
+                ...s,
+                totalDue,
+                totalPaid,
+                outstanding: totalDue - totalPaid,
+                batchName: batchMap[s.batch] || (s.batch ? 'Unknown Batch' : '—')
+            };
+        });
 
-                    const tbody = document.getElementById('allStudentsTableBody');
-                    if (!tbody) return;
+        if (filterText) {
+            const term = filterText.toLowerCase();
+            students = students.filter(s =>
+                (s.name?.toLowerCase().includes(term)) ||
+                (s.fatherName?.toLowerCase().includes(term))
+            );
+        }
 
-                    if (students.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="11">No students found.</td></tr>';
-                        return;
-                    }
+        const tbody = document.getElementById('allStudentsTableBody');
+        if (!tbody) return;
 
-                    tbody.innerHTML = students.map(s => `
-    <tr class="${s.deleted ? 'table-danger' : ''}">
-        <td>${s.id?.substring(0, 6).toUpperCase() || '—'}</td>
-        <td>${s.name || '—'}</td>
-        <td>${s.fatherName || '—'}</td>
-        <td>${s.phone || '—'}</td> <!-- 👈 NEW -->
-        <td>${s.course || '—'}</td>
-        <td>${s.batch || '—'}</td>
-        <td>${formatDate(s.admissionDate) || '—'}</td>
-        <td>₹${s.totalDue.toLocaleString()}</td>
-        <td>₹${s.totalPaid.toLocaleString()}</td>
-        <td>₹${s.outstanding.toLocaleString()}</td>
-        <td>
-            <span class="badge ${s.deleted ? 'bg-danger' : 'bg-success'}">
-                ${s.deleted ? 'Archived' : 'Active'}
-            </span>
-            ${s.deleted ? `
-                <button class="btn btn-xs btn-outline-primary ms-2" onclick="Fees.recordPaymentForArchivedStudent('${s.id}', '${(s.name || '').replace(/'/g, "\\'").replace(/"/g, "&quot;")}')">
-                    <i class="fas fa-money-bill"></i> Record Payment
-                </button>
-            ` : ''}
-        </td>
-    </tr>
+        if (students.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="11">No students found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = students.map(s => `
+<tr class="${s.deleted ? 'table-danger' : ''}">
+    <td>${s.id?.substring(0, 6).toUpperCase() || '—'}</td>
+    <td>${s.name || '—'}</td>
+    <td>${s.fatherName || '—'}</td>
+    <td>${s.phone || '—'}</td>
+    <td>${s.course || '—'}</td>
+    <td>${s.batchName}</td> <!-- 👈 NOW SHOWS BATCH NAME -->
+    <td>${formatDate(s.admissionDate) || '—'}</td>
+    <td>₹${s.totalDue.toLocaleString()}</td>
+    <td>₹${s.totalPaid.toLocaleString()}</td>
+    <td>₹${s.outstanding.toLocaleString()}</td>
+    <td>
+        <span class="badge ${s.deleted ? 'bg-danger' : 'bg-success'}">
+            ${s.deleted ? 'Archived' : 'Active'}
+        </span>
+        ${s.deleted ? `
+            <button class="btn btn-xs btn-outline-primary ms-2" onclick="Fees.recordPaymentForArchivedStudent('${s.id}', '${(s.name || '').replace(/'/g, "\\'").replace(/"/g, "&quot;")}')">
+                <i class="fas fa-money-bill"></i> Record Payment
+            </button>
+        ` : ''}
+        <button class="btn btn-xs btn-outline-danger ms-2" onclick="AllStudents.confirmPermanentDelete('${s.id}', '${(s.name || '').replace(/'/g, "\\'").replace(/"/g, "&quot;")}')">
+            <i class="fas fa-trash-alt"></i> Delete
+        </button>
+    </td>
+</tr>
 `).join('');
 
-                } catch (error) {
-                    console.error(error);
-                    showToast('Failed to load all students.', 'error');
-                }
-            }
+    } catch (error) {
+        console.error("❌ Failed to load all students:", error);
+        showToast('Failed to load all students.', 'error');
+    }
+}
 
             static filterStudents(query) {
                 this.renderAllStudents(query);

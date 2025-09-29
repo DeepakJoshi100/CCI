@@ -28,6 +28,42 @@
     padding: 0.15rem 0.3rem;
     font-size: 0.75rem;
 }
+/* STATUS BADGES */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+.status-paid { background: #d1e7dd; color: #0f5132; }
+.status-partial { background: #fff3cd; color: #664d03; }
+.status-unpaid { background: #f8d7da; color: #721c24; }
+
+/* TABLE ROW HIGHLIGHTING */
+.table-danger { background-color: #f8d7da !important; }
+
+/* BADGES */
+.badge {
+    display: inline-block;
+    padding: 0.25em 0.4em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+}
+.bg-success { background-color: #d1e7dd !important; color: #0f5132; }
+.bg-danger { background-color: #f8d7da !important; color: #721c24; }
+.btn-link {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+}
 
 .table-danger .btn-outline-primary {
     border-color: #dc3545;

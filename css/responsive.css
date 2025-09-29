@@ -92,44 +92,50 @@
     }
 }
 
-/* Small Devices (Tablets, 768px and down) */
+/* Small Devices (Phones/Tablets, 768px and down) */
 @media (max-width: 768px) {
     .sidebar {
-        width: 70px;
+        width: 250px; /* Full panel width */
+        transform: translateX(-100%); /* Hidden off-screen */
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     }
-    
-    .sidebar .logo h2 span,
-    .sidebar .nav-link span {
-        display: none;
+
+    .sidebar.active {
+        transform: translateX(0); /* Slide in */
     }
-    
-    .sidebar .nav-link {
-        justify-content: center;
-        padding: 15px;
-    }
-    
-    .sidebar .nav-link i {
-        margin-right: 0;
-        font-size: 1.2rem;
-    }
-    
+
     .main-content {
-        margin-left: 70px;
+        margin-left: 0;
+        transition: margin-left 0.3s ease;
     }
-    
+
     .menu-toggle {
         display: block;
     }
-    
-    .stats-cards {
-        grid-template-columns: 1fr 1fr;
+
+    /* Show full labels in slide-in panel */
+    .sidebar .logo h2 span,
+    .sidebar .nav-link span {
+        display: inline;
     }
-    
-    .fee-summary {
-        grid-template-columns: 1fr 1fr;
+
+    .sidebar .nav-link {
+        padding: 15px 20px;
+        justify-content: flex-start;
+        gap: 12px;
+    }
+
+    .sidebar .nav-link i {
+        margin-right: 10px;
+        font-size: 1.1rem;
     }
 }
-
 /* Medium Devices (Desktops, 992px and down) */
 @media (max-width: 992px) {
     .charts-container {
