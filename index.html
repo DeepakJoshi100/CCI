@@ -555,7 +555,9 @@
             appId: "1:508467185521:web:71d911a1aff8987cc358d0"
         };
         let CURRENT_USER_ID = null;
-
+function isMobile() {
+    return window.innerWidth <= 768;
+}
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
@@ -757,14 +759,22 @@
     });
 }
             static setupNavigation() {
-                document.querySelectorAll('.nav-link').forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const target = e.target.closest('a').getAttribute('href').substring(1);
-                        window.location.hash = target;
-                    });
-                });
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = e.target.closest('a').getAttribute('href').substring(1);
+            window.location.hash = target;
+
+            // 👇 Auto-close sidebar on mobile after navigation
+            if (isMobile()) {
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
             }
+        });
+    });
+}
             static setupGlobalUI() {
                 const menuToggle = document.getElementById('menuToggle');
                 const sidebar = document.querySelector('.sidebar');
