@@ -8,11 +8,61 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 </head>
 
 <body>
-    <div class="container"> <!-- Sidebar -->
+
+    <!-- 🎯 GLOBAL APP LOADER -->
+    <div id="globalAppLoader" style="
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        transition: opacity 0.3s ease;
+    ">
+        <div style="
+            width: 60px; height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4361ee;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        "></div>
+        <div style="
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: #495057;
+            font-weight: 500;
+        ">Loading EduManage...</div>
+        <div style="
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        ">Please wait while we set things up for you.</div>
+    </div>
+
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
+    <script>
+        // 👇 FALLBACK: Hide loader after 5 seconds max (in case something breaks)
+        setTimeout(() => {
+            const loader = document.getElementById('globalAppLoader');
+            if (loader && loader.style.display !== 'none') {
+                loader.style.opacity = '0';
+                setTimeout(() => { if (loader) loader.style.display = 'none'; }, 300);
+            }
+        }, 5000);
+    </script>
+    <div class="container">
         <aside class="sidebar">
             <div class="logo">
                 <h2><i class="fas fa-graduation-cap"></i> EduManage</h2>
@@ -54,6 +104,10 @@
                 <!-- DASHBOARD SECTION -->
                 <section id="dashboard-section" class="section">
                     <div class="dashboard-container">
+                        <div class="loading-overlay" id="dashboard-loading">
+                            <div class="loading-spinner"></div>
+                            <div class="loading-text">Loading dashboard data...</div>
+                        </div>
                         <div class="stats-cards">
                             <div class="stat-card">
                                 <div class="stat-icon bg-primary">
@@ -121,41 +175,46 @@
                             <i class="fas fa-plus"></i> Add Student
                         </button>
                     </div>
-                    <div class="filters">
-                        <div class="search-box">
-                            <input type="text" id="searchStudent" placeholder="Search by name or father's name...">
-                            <i class="fas fa-search"></i>
+                    <div class="section-content-wrapper" style="position: relative;">
+                        <div class="loading-overlay" id="students-loading" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <div class="loading-text">Loading students...</div>
                         </div>
-                        <div class="filter-options">
-                            <select id="filterByBatch">
-                                <option value="">All Batches</option>
-                            </select>
-                            <select id="filterByCourse">
-                                <option value="">All Courses</option>
-                            </select>
+                        <div class="filters">
+                            <div class="search-box">
+                                <input type="text" id="searchStudent" placeholder="Search by name or father's name...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="filter-options">
+                                <select id="filterByBatch">
+                                    <option value="">All Batches</option>
+                                </select>
+                                <select id="filterByCourse">
+                                    <option value="">All Courses</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Father's Name</th>
-                                    <th>Course</th>
-                                    <th>Batch</th>
-                                    <th>Monthly Fee</th>
-                                    <th>Admission Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="studentsTableBody">
-                                <tr>
-                                    <td colspan="8" class="no-data">Loading...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Father's Name</th>
+                                        <th>Course</th>
+                                        <th>Batch</th>
+                                        <th>Monthly Fee</th>
+                                        <th>Admission Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentsTableBody">
+                                    <tr>
+                                        <td colspan="8" class="no-data">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                 </section>
 
                 <!-- BATCHES SECTION -->
@@ -166,132 +225,146 @@
                             <i class="fas fa-plus"></i> Add Batch
                         </button>
                     </div>
-                    <div class="batch-selector">
-                        <div
-                            style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
-                            <select id="batchSelector">
-                                <option value="">Loading batches...</option>
-                            </select>
-                            <button class="btn btn-danger" id="deleteBatchBtn">
-                                <i class="fas fa-trash"></i> Delete Batch
-                            </button>
+                    <div class="section-content-wrapper" style="position: relative;">
+                        <div class="loading-overlay" id="batches-loading" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <div class="loading-text">Loading batches...</div>
                         </div>
-                    </div>
-                    <div class="batch-details">
-                        <div class="batch-info">
-                            <h3 id="batchName">-</h3>
-                            <div class="batch-stats">
-                                <div class="stat">
-                                    <span class="label">Total Students:</span>
-                                    <span class="value" id="batchStudentCount">0</span>
-                                </div>
-                                <div class="stat">
-                                    <span class="label">Courses:</span>
-                                    <span class="value" id="batchCourses">-</span>
+                        <div class="batch-selector">
+                            <div
+                                style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
+                                <select id="batchSelector">
+                                    <option value="">Loading batches...</option>
+                                </select>
+                                <button class="btn btn-danger" id="deleteBatchBtn">
+                                    <i class="fas fa-trash"></i> Delete Batch
+                                </button>
+                            </div>
+                        </div>
+                        <div class="batch-details">
+                            <div class="batch-info">
+                                <h3 id="batchName">-</h3>
+                                <div class="batch-stats">
+                                    <div class="stat">
+                                        <span class="label">Total Students:</span>
+                                        <span class="value" id="batchStudentCount">0</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="label">Courses:</span>
+                                        <span class="value" id="batchCourses">-</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="students-in-batch">
-                        <h3>Students in this Batch</h3>
-                        <div class="table-responsive">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Name</th>
-                                        <th>Course</th>
-                                        <th>Monthly Fee</th>
-                                        <th>Admission Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="batchStudentsTable">
-                                    <tr>
-                                        <td colspan="6" class="no-data">Select a batch to view students.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="students-in-batch">
+                            <h3>Students in this Batch</h3>
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Course</th>
+                                            <th>Monthly Fee</th>
+                                            <th>Admission Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="batchStudentsTable">
+                                        <tr>
+                                            <td colspan="6" class="no-data">Select a batch to view students.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
                 </section>
 
                 <!-- FEES SECTION -->
                 <section id="fees-section" class="section">
+                    <div id="feeSyncStatus"
+                        style="display:none; padding:10px; background:#fff3cd; border:1px solid #ffeaa7; border-radius:6px; margin-bottom:20px;">
+                        <i class="fas fa-sync fa-spin"></i> Syncing fee records... Please wait.
+                    </div>
                     <div class="page-header">
                         <h2>Fee Management</h2>
                         <button class="btn btn-primary" id="payFeeBtn">
                             <i class="fas fa-money-bill"></i> Record Payment
                         </button>
                     </div>
-                    <div class="fee-filters">
-                        <div class="search-box">
-                            <input type="text" id="feeSearch" placeholder="Search by student name or ID...">
-                            <i class="fas fa-search"></i>
+                    <div class="section-content-wrapper" style="position: relative;">
+                        <div class="loading-overlay" id="fees-loading" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <div class="loading-text">Loading fee records...</div>
                         </div>
-                        <div class="filter-options">
-                            <select id="feeStatusFilter">
-                                <option value="">All Status</option>
-                                <option value="paid">Paid</option>
-                                <option value="unpaid">Unpaid</option>
-                                <option value="partial">Partial Payment</option>
-                            </select>
-                            <select id="monthFilter">
-                                <option value="">All Months</option>
-                                <option value="0">January</option>
-                                <option value="1">February</option>
-                                <option value="2">March</option>
-                                <option value="3">April</option>
-                                <option value="4">May</option>
-                                <option value="5">June</option>
-                                <option value="6">July</option>
-                                <option value="7">August</option>
-                                <option value="8">September</option>
-                                <option value="9">October</option>
-                                <option value="10">November</option>
-                                <option value="11">December</option>
-                            </select>
-                            <select id="yearFilter">
-                                <option value="">All Years</option>
-                            </select>
+                        <div class="fee-filters">
+                            <div class="search-box">
+                                <input type="text" id="feeSearch" placeholder="Search by student name or ID...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="filter-options">
+                                <select id="feeStatusFilter">
+                                    <option value="">All Status</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="unpaid">Unpaid</option>
+                                    <option value="partial">Partial Payment</option>
+                                </select>
+                                <select id="monthFilter">
+                                    <option value="">All Months</option>
+                                    <option value="0">January</option>
+                                    <option value="1">February</option>
+                                    <option value="2">March</option>
+                                    <option value="3">April</option>
+                                    <option value="4">May</option>
+                                    <option value="5">June</option>
+                                    <option value="6">July</option>
+                                    <option value="7">August</option>
+                                    <option value="8">September</option>
+                                    <option value="9">October</option>
+                                    <option value="10">November</option>
+                                    <option value="11">December</option>
+                                </select>
+                                <select id="yearFilter">
+                                    <option value="">All Years</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div class="fee-summary">
-                        <div class="summary-card">
-                            <h4>Total Amount</h4>
-                            <p id="totalAmount">₹0</p>
+                        <div class="fee-summary">
+                            <div class="summary-card">
+                                <h4>Total Amount</h4>
+                                <p id="totalAmount">₹0</p>
+                            </div>
+                            <div class="summary-card">
+                                <h4>Paid Amount</h4>
+                                <p id="paidAmount">₹0</p>
+                            </div>
+                            <div class="summary-card">
+                                <h4>Outstanding</h4>
+                                <p id="outstandingAmount">₹0</p>
+                            </div>
                         </div>
-                        <div class="summary-card">
-                            <h4>Paid Amount</h4>
-                            <p id="paidAmount">₹0</p>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Student ID</th>
+                                        <th>Student Name</th>
+                                        <th>Batch</th>
+                                        <th>Month/Year</th>
+                                        <th>Amount Due</th>
+                                        <th>Amount Paid</th>
+                                        <th>Status</th>
+                                        <th>Payment Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="feesTableBody">
+                                    <tr>
+                                        <td colspan="9" class="no-data">Loading fee records...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="summary-card">
-                            <h4>Outstanding</h4>
-                            <p id="outstandingAmount">₹0</p>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Student ID</th>
-                                    <th>Student Name</th>
-                                    <th>Batch</th>
-                                    <th>Month/Year</th>
-                                    <th>Amount Due</th>
-                                    <th>Amount Paid</th>
-                                    <th>Status</th>
-                                    <th>Payment Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="feesTableBody">
-                                <tr>
-                                    <td colspan="9" class="no-data">Loading fee records...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
                 </section>
 
                 <!-- ALL STUDENTS SECTION -->
@@ -302,43 +375,50 @@
                             <i class="fas fa-info-circle"></i> Read-only archive including deleted students
                         </div>
                     </div>
-                    <div class="filters">
-                        <div class="search-box">
-                            <input type="text" id="searchAllStudents" placeholder="Search by name or father's name...">
-                            <i class="fas fa-search"></i>
+                    <div class="section-content-wrapper" style="position: relative;">
+                        <div class="loading-overlay" id="all-students-loading" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <div class="loading-text">Loading all student records...</div>
                         </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Father's Name</th>
-                                    <th>Phone</th> <!-- 👈 NEW -->
-                                    <th>Course</th>
-                                    <th>Batch</th>
-                                    <th>Admission Date</th>
-                                    <th>Total Due</th>
-                                    <th>Total Paid</th>
-                                    <th>Outstanding</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="allStudentsTableBody">
-                                <tr>
-                                    <td colspan="10" class="no-data">Loading...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div
-                        style="margin-top: 30px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        <h4><i class="fas fa-lightbulb"></i> About This Page</h4>
-                        <p>This archive shows all students ever registered, including those archived ("deleted").</p>
-                        <p>Financial summary is calculated from all fee records associated with each student.</p>
-                        <p>Active students can be managed from the "Active Students" page.</p>
-                    </div>
+                        <div class="filters">
+                            <div class="search-box">
+                                <input type="text" id="searchAllStudents"
+                                    placeholder="Search by name or father's name...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Father's Name</th>
+                                        <th>Phone</th> <!-- 👈 NEW -->
+                                        <th>Course</th>
+                                        <th>Batch</th>
+                                        <th>Admission Date</th>
+                                        <th>Total Due</th>
+                                        <th>Total Paid</th>
+                                        <th>Outstanding</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allStudentsTableBody">
+                                    <tr>
+                                        <td colspan="10" class="no-data">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div
+                            style="margin-top: 30px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h4><i class="fas fa-lightbulb"></i> About This Page</h4>
+                            <p>This archive shows all students ever registered, including those archived ("deleted").
+                            </p>
+                            <p>Financial summary is calculated from all fee records associated with each student.</p>
+                            <p>Active students can be managed from the "Active Students" page.</p>
+                        </div>
                 </section>
             </div>
         </main>
@@ -365,10 +445,12 @@
                         <input type="text" id="fatherName" name="fatherName" placeholder="Enter father's name" required>
                     </div>
                     <div class="form-group">
-                        <label for="phone">Phone Number (Optional)</label>
-                        <input type="tel" id="phone" name="phone" placeholder="e.g., 9876543210" pattern="[0-9]{10}"
-                            maxlength="10">
-                        <small style="color: #6c757d;">10-digit mobile number</small>
+                        <label for="phone">Phone Numbers (Optional)</label>
+                        <textarea id="phone" name="phone" rows="2" placeholder="e.g., 9876543210, 8765432109"
+                            style="resize: vertical;"></textarea>
+                        <small style="color: #6c757d;">
+                            Enter multiple 10-digit numbers separated by commas. Example: 9876543210, 8765432109
+                        </small>
                     </div>
                     <div class="form-group">
                         <label for="admissionDate">Admission Date *</label>
@@ -461,29 +543,76 @@
                         </select>
                         <small style="color: #6c757d;">Total due will auto-calculate based on all unpaid months.</small>
                     </div>
+                    <div class="form-group" style="margin-top: 10px;">
+    <label>
+        <input type="checkbox" id="holdPaymentCheckbox">
+        Hold this month’s payment (e.g., student on leave)
+    </label>
+    <!-- HOLD MONTH SELECTORS (initially hidden/disabled) -->
+<div id="holdMonthSelectors" style="display: none; margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+    <h4 style="margin: 0 0 10px 0; font-size: 0.95rem; color: #dc3545;">
+        <i class="fas fa-pause-circle"></i> Select Month to Hold
+    </h4>
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 120px;">
+            <label>Month</label>
+            <select id="holdMonthSelect" class="form-control" disabled>
+                <option value="">Select Month</option>
+                <option value="0">January</option>
+                <option value="1">February</option>
+                <option value="2">March</option>
+                <option value="3">April</option>
+                <option value="4">May</option>
+                <option value="5">June</option>
+                <option value="6">July</option>
+                <option value="7">August</option>
+                <option value="8">September</option>
+                <option value="9">October</option>
+                <option value="10">November</option>
+                <option value="11">December</option>
+            </select>
+        </div>
+        <div style="flex: 1; min-width: 120px;">
+            <label>Year</label>
+            <select id="holdYearSelect" class="form-control" disabled>
+                <option value="">Select Year</option>
+                <!-- Will be populated by JS -->
+            </select>
+        </div>
+    </div>
+    <small style="color: #6c757d; display: block; margin-top: 8px;">
+        Selected month will be placed on hold — no fee due. Can be un-held later.
+    </small>
+</div>
+    <small style="color: #dc3545; display: block; margin-top: 4px;">
+        ⚠️ Selected month will be skipped — no fee due. Can be un-held later.
+    </small>
+</div>
                     <div class="form-group">
                         <label for="amountDue">Total Amount Due *</label>
                         <input type="number" id="amountDue" readonly placeholder="Select student to see due amount">
                     </div>
-                    <div class="form-group">
-                        <label for="amountPaid">Amount Paid *</label>
-                        <input type="number" id="amountPaid" min="0" step="10" required
-                            placeholder="Enter amount received">
-                        <small style="color: #6c757d;">Payments are applied to oldest unpaid months first.</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="paymentMethod">Payment Method</label>
-                        <select id="paymentMethod" name="paymentMethod">
-                            <option value="cash">Cash</option>
-                            <option value="bank_transfer">Bank Transfer</option>
-                            <option value="upi">UPI</option>
-                            <option value="card">Card</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="paymentNotes">Notes (Optional)</label>
-                        <textarea id="paymentNotes" rows="3" placeholder="Transaction ID, reference, etc."></textarea>
-                    </div>
+                    <!-- PAYMENT FIELDS GROUP -->
+<div id="paymentFields">
+    <div class="form-group">
+        <label for="amountPaid">Amount Paid *</label>
+        <input type="number" id="amountPaid" min="0" step="10" required placeholder="Enter amount received">
+        <small style="color: #6c757d;">Payments are applied to oldest unpaid months first.</small>
+    </div>
+    <div class="form-group">
+        <label for="paymentMethod">Payment Method</label>
+        <select id="paymentMethod" name="paymentMethod">
+            <option value="cash">Cash</option>
+            <option value="bank_transfer">Bank Transfer</option>
+            <option value="upi">UPI</option>
+            <option value="card">Card</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="paymentNotes">Notes (Optional)</label>
+        <textarea id="paymentNotes" rows="3" placeholder="Transaction ID, reference, etc."></textarea>
+    </div>
+</div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Record Payment</button>
                         <button type="button" class="btn btn-secondary" id="cancelPayFeeBtn">Cancel</button>
@@ -509,43 +638,44 @@
         </div>
     </div>
     <!-- Confirm Password Modal -->
-<div class="modal" id="confirmPasswordModal" style="display:none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Confirm Deletion</h3>
-            <button class="close-btn" id="closePasswordModal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p>⚠️ This will permanently delete the student record. Enter your password to confirm:</p>
-            <form id="passwordForm">
-                <div class="form-group">
-                    <label for="confirmPassword">Password</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Enter your password" required>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-danger">Delete Permanently</button>
-                    <button type="button" class="btn btn-secondary" id="cancelPasswordBtn">Cancel</button>
-                </div>
-            </form>
+    <div class="modal" id="confirmPasswordModal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Deletion</h3>
+                <button class="close-btn" id="closePasswordModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>⚠️ This will permanently delete the student record. Enter your password to confirm:</p>
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label for="confirmPassword">Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword"
+                            placeholder="Enter your password" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                        <button type="button" class="btn btn-secondary" id="cancelPasswordBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
     <script type="module">
         // ============================= 
         // 🔥 FIREBASE CONFIGURATION 
         // ============================= 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-       import { 
-    getAuth, 
-    signInWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged, 
-    GoogleAuthProvider, 
-    signInWithPopup,
-    EmailAuthProvider,           // ← ADD THIS
-    reauthenticateWithCredential // ← ADD THIS
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import {
+            getAuth,
+            signInWithEmailAndPassword,
+            signOut,
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            signInWithPopup,
+            EmailAuthProvider,           // ← ADD THIS
+            reauthenticateWithCredential // ← ADD THIS
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         const firebaseConfig = {
             apiKey: "AIzaSyCJhbTQ5ZwLhakUQBGpclZVsZG0V8-qWhs",
             authDomain: "stylestock.firebaseapp.com",
@@ -555,9 +685,9 @@
             appId: "1:508467185521:web:71d911a1aff8987cc358d0"
         };
         let CURRENT_USER_ID = null;
-function isMobile() {
-    return window.innerWidth <= 768;
-}
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
@@ -574,6 +704,22 @@ function isMobile() {
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
             return `${day}/${month}/${year}`;
+        }
+
+        // 👇👇👇 ADD IT RIGHT HERE 👇👇👇
+        // Loading Screen Helpers
+        function showLoading(sectionId) {
+            const loadingEl = document.getElementById(`${sectionId}-loading`);
+            if (loadingEl) {
+                loadingEl.style.display = 'flex';
+            }
+        }
+
+        function hideLoading(sectionId) {
+            const loadingEl = document.getElementById(`${sectionId}-loading`);
+            if (loadingEl) {
+                loadingEl.style.display = 'none';
+            }
         }
         function showToast(message, type = 'success') {
             document.querySelectorAll('.toast').forEach(el => el.remove());
@@ -610,16 +756,16 @@ function isMobile() {
                 return student;
             }
             static async archiveStudent(id) { await updateDoc(doc(db, "students", id), { deleted: true }); }
-      static async getBatches() {
-    const q = query(
-        collection(db, "batches"),
-        where("ownerId", "==", CURRENT_USER_ID)
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .sort((a, b) => (a.name || '').localeCompare(b.name || '')); // ← SORT BY NAME
-}
+            static async getBatches() {
+                const q = query(
+                    collection(db, "batches"),
+                    where("ownerId", "==", CURRENT_USER_ID)
+                );
+                const snapshot = await getDocs(q);
+                return snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || '')); // ← SORT BY NAME
+            }
             static async saveBatch(batch) {
                 batch.ownerId = CURRENT_USER_ID; // 👈 ATTACH OWNER ID
                 if (batch.id) {
@@ -700,14 +846,14 @@ function isMobile() {
             static onAuthStateChanged(callback) { return onAuthStateChanged(auth, callback); }
             static getCurrentUser() { return auth.currentUser; }
         }
-
+        window.Auth = Auth;
         // ============================= 
         // 🎯 MAIN APP CONTROLLER 
         // ============================= 
         class App {
             static _initialized = false;
             static async init() { if (this._initialized) return; this._initialized = true; console.log("🚀 EduManage Single-Page App Initializing..."); if (document.readyState !== 'loading') this.onDOMReady(); else document.addEventListener('DOMContentLoaded', () => this.onDOMReady()); }
-           static async onDOMReady() {
+            static async onDOMReady() {
     // 👇 WAIT for auth to complete BEFORE preloading
     await this.initializeAuth();
 
@@ -718,7 +864,7 @@ function isMobile() {
             DataCache.getStudents().catch(console.warn),
             DataCache.getFees().catch(console.warn)
         ]);
-        
+
         this.setupNavigation();
         this.setupGlobalUI();
     }
@@ -728,53 +874,61 @@ function isMobile() {
         const sectionId = location.hash.substring(1) || 'dashboard';
         this.showSection(sectionId);
     });
+        // 👇 HIDE GLOBAL LOADER AFTER EVERYTHING IS READY
+    const globalLoader = document.getElementById('globalAppLoader');
+    if (globalLoader) {
+        globalLoader.style.opacity = '0';
+        setTimeout(() => {
+            globalLoader.style.display = 'none';
+        }, 300);
+    }
 }
             static async initializeAuth() {
-    return new Promise(resolve => {
-        Auth.onAuthStateChanged(async (user) => {
-            const isLoginPage = window.location.pathname.includes('login.html');
+                return new Promise(resolve => {
+                    Auth.onAuthStateChanged(async (user) => {
+                        const isLoginPage = window.location.pathname.includes('login.html');
 
-            if (!user && !isLoginPage) {
-                window.location.href = 'login.html';
-                resolve();
-                return;
+                        if (!user && !isLoginPage) {
+                            window.location.href = 'login.html';
+                            resolve();
+                            return;
+                        }
+
+                        if (user && isLoginPage) {
+                            window.location.href = 'index.html';
+                            resolve();
+                            return;
+                        }
+
+                        if (user && document.getElementById('user-email')) {
+                            document.getElementById('user-email').textContent = user.email;
+                            CURRENT_USER_ID = user.uid; // 👈 Set BEFORE resolving
+                            console.log("✅ Authenticated as:", user.email, "| UID:", user.uid);
+                        } else {
+                            CURRENT_USER_ID = null;
+                        }
+
+                        resolve(); // 👈 Resolve AFTER setting CURRENT_USER_ID
+                    });
+                });
             }
-
-            if (user && isLoginPage) {
-                window.location.href = 'index.html';
-                resolve();
-                return;
-            }
-
-            if (user && document.getElementById('user-email')) {
-                document.getElementById('user-email').textContent = user.email;
-                CURRENT_USER_ID = user.uid; // 👈 Set BEFORE resolving
-                console.log("✅ Authenticated as:", user.email, "| UID:", user.uid);
-            } else {
-                CURRENT_USER_ID = null;
-            }
-
-            resolve(); // 👈 Resolve AFTER setting CURRENT_USER_ID
-        });
-    });
-}
             static setupNavigation() {
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = e.target.closest('a').getAttribute('href').substring(1);
-            window.location.hash = target;
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const target = e.target.closest('a').getAttribute('href').substring(1);
+                        window.location.hash = target;
 
-            // 👇 Auto-close sidebar on mobile after navigation
-            if (isMobile()) {
-                const sidebar = document.querySelector('.sidebar');
-                if (sidebar && sidebar.classList.contains('active')) {
-                    sidebar.classList.remove('active');
-                }
+                        // 👇 Auto-close sidebar on mobile after navigation
+                        if (isMobile()) {
+                            const sidebar = document.querySelector('.sidebar');
+                            if (sidebar && sidebar.classList.contains('active')) {
+                                sidebar.classList.remove('active');
+                            }
+                        }
+                    });
+                });
             }
-        });
-    });
-}
             static setupGlobalUI() {
                 const menuToggle = document.getElementById('menuToggle');
                 const sidebar = document.querySelector('.sidebar');
@@ -790,21 +944,47 @@ function isMobile() {
                     }
                 });
             }
-            static async showSection(sectionId) {
-                document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-                const targetSection = document.getElementById(`${sectionId}-section`);
-                if (targetSection) targetSection.classList.add('active');
-                switch (sectionId) {
-                    case 'dashboard': await Dashboard.init(); break;
-                    case 'students': await Students.init(); break;
-                    case 'batches': await Batches.init(); break;
-                    case 'fees': await Fees.init(); break;
-                    case 'all-students': await AllStudents.init(); break;
-                }
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                const activeLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
-                if (activeLink) activeLink.classList.add('active');
+           static async showSection(sectionId) {
+    // Hide all sections first
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+
+    // Get target section
+    const targetSection = document.getElementById(`${sectionId}-section`);
+    if (targetSection) {
+        targetSection.classList.add('active');
+
+        // 👇 SHOW LOADER IMMEDIATELY FOR DATA-HEAVY SECTIONS
+        const loaderMap = {
+            'dashboard': 'dashboard-loading',
+            'students': 'students-loading',
+            'batches': 'batches-loading',
+            'fees': 'fees-loading',
+            'all-students': 'all-students-loading'
+        };
+
+        const loaderId = loaderMap[sectionId];
+        if (loaderId) {
+            const loaderEl = document.getElementById(loaderId);
+            if (loaderEl) {
+                loaderEl.style.display = 'flex'; // 👈 Show loader BEFORE init()
             }
+        }
+    }
+
+    // Now initialize the section (which will hide loader when done)
+    switch (sectionId) {
+        case 'dashboard': await Dashboard.init(); break;
+        case 'students': await Students.init(); break;
+        case 'batches': await Batches.init(); break;
+        case 'fees': await Fees.init(); break;
+        case 'all-students': await AllStudents.init(); break;
+    }
+
+    // Update active nav link
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    const activeLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
+    if (activeLink) activeLink.classList.add('active');
+}
             static handleInitialRoute() {
                 const hash = window.location.hash.substring(1);
                 const sectionId = hash || 'dashboard';
@@ -823,6 +1003,7 @@ function isMobile() {
             static batchChart = null;
             static feeChart = null;
             static async init() {
+                showLoading('dashboard'); // Show loading
                 try {
                     await this.renderStats();
                     await this.renderCharts();
@@ -831,6 +1012,8 @@ function isMobile() {
                 } catch (error) {
                     console.error("❌ Dashboard failed:", error);
                     showToast("Dashboard failed to load.", "error");
+                } finally {
+                    hideLoading('dashboard'); // Hide loading
                 }
             }
             static bindEvents() {
@@ -853,9 +1036,10 @@ function isMobile() {
                     const totalRevenue = fees.reduce((sum, f) => sum + (f.amountPaid || 0), 0);
                     document.getElementById('total-revenue').innerText = `₹${totalRevenue.toLocaleString()}`;
                     const pendingFees = fees.reduce((sum, f) => {
-                        const paid = f.amountPaid || 0;
-                        return sum + Math.max(0, (f.amount || 0) - paid);
-                    }, 0);
+    if (f.hold) return sum; // 👈 Skip held months
+    const paid = f.amountPaid || 0;
+    return sum + Math.max(0, (f.amount || 0) - paid);
+}, 0);
                     document.getElementById('pending-fees').innerText = `₹${pendingFees.toLocaleString()}`;
                 } catch (error) {
                     console.error(error);
@@ -869,24 +1053,24 @@ function isMobile() {
             static async renderBatchDistributionChart() {
                 try {
                     const [students, batches] = await Promise.all([
-    DataCache.getStudents(),
-    DataCache.getBatches()
-]);
+                        DataCache.getStudents(),
+                        DataCache.getBatches()
+                    ]);
 
-// Create a map: batchId → batchName
-const batchMap = {};
-batches.forEach(b => {
-    batchMap[b.id] = b.name || 'Unnamed Batch';
-});
+                    // Create a map: batchId → batchName
+                    const batchMap = {};
+                    batches.forEach(b => {
+                        batchMap[b.id] = b.name || 'Unnamed Batch';
+                    });
 
-// Count students per batch, but store by NAME
-const batchCounts = {};
-students
-    .filter(s => !s.deleted && s.batch)
-    .forEach(s => {
-        const batchName = batchMap[s.batch] || 'Unknown Batch';
-        batchCounts[batchName] = (batchCounts[batchName] || 0) + 1;
-    });
+                    // Count students per batch, but store by NAME
+                    const batchCounts = {};
+                    students
+                        .filter(s => !s.deleted && s.batch)
+                        .forEach(s => {
+                            const batchName = batchMap[s.batch] || 'Unknown Batch';
+                            batchCounts[batchName] = (batchCounts[batchName] || 0) + 1;
+                        });
                     const canvas = document.getElementById('batchDistributionChart');
                     if (!canvas) return;
                     const ctx = canvas.getContext('2d');
@@ -917,81 +1101,200 @@ students
                 }
             }
             static async renderFeeCollectionChart() {
-                try {
-                    const fees = (await DataCache.getFees()).filter(f => (f.amountPaid || 0) > 0);
-                    const monthlyData = {};
-                    fees.forEach(f => {
-                        const key = f.paidDate ? f.paidDate.substring(0, 7) : f.month;
-                        monthlyData[key] = (monthlyData[key] || 0) + (f.amountPaid || 0);
-                    });
-                    const sortedKeys = Object.keys(monthlyData).sort();
-                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                    const labels = sortedKeys.map(k => {
-                        const [y, m] = k.split('-');
-                        return `${monthNames[parseInt(m) - 1]} ${y}`;
-                    });
-                    const data = sortedKeys.map(k => monthlyData[k]);
-                    const canvas = document.getElementById('feeCollectionChart');
-                    if (!canvas) return;
-                    const ctx = canvas.getContext('2d');
-                    if (this.feeChart) this.feeChart.destroy();
-                    this.feeChart = new Chart(ctx, {
+    try {
+        const fees = await DataCache.getFees();
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth(); // 0 = Jan, 11 = Dec
+
+        // 👇 Build list of last 3 months: [Aug, Sept, Oct] if now is Oct
+        const last3Months = [];
+        for (let i = 2; i >= 0; i--) { // Start from 2 months ago → current month
+            const monthOffset = currentMonth - i;
+            let year = currentYear;
+            let month = monthOffset;
+
+            if (month < 0) {
+                year -= 1;
+                month += 12;
+            }
+
+            const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`; // "2025-10"
+            const monthName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month];
+            last3Months.push({
+                key: monthKey,
+                label: `${monthName} ${year}`,
+                monthIndex: month,
+                year: year
+            });
+        }
+
+        // 👇 Calculate total collected per month (only PAID fees, not held)
+        const monthlyData = {};
+        last3Months.forEach(m => monthlyData[m.key] = 0);
+
+        fees.forEach(f => {
+            if (!f.paid || f.hold) return; // Skip unpaid or held
+            if (monthlyData.hasOwnProperty(f.month)) {
+                monthlyData[f.month] += (f.amountPaid || 0);
+            }
+        });
+
+        // 👇 Prepare data for chart
+        const labels = last3Months.map(m => m.label);
+        const barData = last3Months.map(m => monthlyData[m.key]);
+        const lineData = [...barData]; // Same values for trend line
+
+        const canvas = document.getElementById('feeCollectionChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (this.feeChart) this.feeChart.destroy();
+
+        this.feeChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
                         type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Monthly Collection (₹)',
-                                data: data,
-                                backgroundColor: '#4361ee',
-                                borderColor: '#3a0ca3',
-                                borderWidth: 1,
-                                borderRadius: 5,
-                                borderSkipped: false
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                y: { beginAtZero: true, ticks: { callback: v => '₹' + Math.floor(v).toLocaleString() } },
-                                x: { grid: { display: false } }
-                            },
-                            plugins: {
-                                legend: { display: true, position: 'top' },
-                                tooltip: { callbacks: { label: ctx => `₹${ctx.raw.toLocaleString()}` } }
-                            },
-                            animation: { duration: 1000, easing: 'easeOutQuart' }
+                        label: 'Monthly Collection (₹)',
+                        data: barData,
+                        backgroundColor: '#4361ee',
+                        borderColor: '#3a0ca3',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        borderSkipped: false,
+                        datalabels: {
+                            color: '#000',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: (value) => '₹' + value.toLocaleString(),
+                            anchor: 'end',
+                            align: 'top',
+                            offset: -4
                         }
-                    });
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-            static async renderRecentActivity() {
-                try {
-                    const students = (await DataCache.getStudents())
-                        .filter(s => !s.deleted)
-                        .sort((a, b) => new Date(b.admissionDate) - new Date(a.admissionDate))
-                        .slice(0, 5);
-                    const list = document.getElementById('activity-list');
-                    if (!list) return;
-                    if (students.length === 0) {
-                        list.innerHTML = `<div style="text-align:center; padding:30px; color:#6c757d;"> <i class="fas fa-history" style="font-size:2rem; margin-bottom:10px;"></i> <p>No recent activity</p></div>`;
-                        return;
+                    },
+                    {
+                        type: 'line',
+                        label: 'Trend',
+                        data: lineData,
+                        fill: false,
+                        borderColor: '#e63946',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#e63946',
+                        pointRadius: 5,
+                        tension: 0.3, // Smooth curve
+                        yAxisID: 'y'
                     }
-                    list.innerHTML = students.map(s => ` 
-                <div class="activity-item"> 
-                    <div class="activity-icon bg-primary"><i class="fas fa-user-plus"></i></div> 
-                    <div class="activity-content"> 
-                        <h4>${s.name} joined</h4> 
-                        <p>Admitted on ${formatDate(s.admissionDate)} • ${s.course}</p> 
-                    </div> 
-                </div> 
-            `).join('');
-                } catch (error) {
-                    console.error(error);
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                if (ctx.dataset.type === 'line') {
+                                    return `Trend: ₹${ctx.raw.toLocaleString()}`;
+                                }
+                                return `Collection: ₹${ctx.raw.toLocaleString()}`;
+                            }
+                        }
+                    },
+                    datalabels: {
+                        display: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (value) => '₹' + Math.floor(value).toLocaleString(),
+                            font: { size: 11 }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Amount Collected (₹)',
+                            font: { size: 12 }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Last 3 Months',
+                            font: { size: 12 }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
                 }
-            }
+            },
+            plugins: [ChartDataLabels] // 👈 Required for bar labels
+        });
+
+    } catch (error) {
+        console.error("❌ Failed to render fee collection chart:", error);
+    }
+}
+           static async renderRecentActivity() {
+    try {
+        const students = (await DataCache.getStudents())
+            .filter(s => !s.deleted && s.createdAt) // 👈 Only include if createdAt exists
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // 👈 Sort by createdAt DESC
+            .slice(0, 5); // 👈 Take 5 most recent
+
+        const list = document.getElementById('activity-list');
+        if (!list) return;
+
+        if (students.length === 0) {
+            list.innerHTML = `<div style="text-align:center; padding:30px; color:#6c757d;"> <i class="fas fa-history" style="font-size:2rem; margin-bottom:10px;"></i> <p>No recent activity</p></div>`;
+            return;
+        }
+
+        // Format "time ago" helper (optional but recommended)
+        const formatTimeAgo = (dateStr) => {
+            const now = new Date();
+            const created = new Date(dateStr);
+            const diffMs = now - created;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHrs = Math.floor(diffMin / 60);
+            const diffDays = Math.floor(diffHrs / 24);
+
+            if (diffSec < 60) return `${diffSec}s ago`;
+            if (diffMin < 60) return `${diffMin}m ago`;
+            if (diffHrs < 24) return `${diffHrs}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return formatDate(dateStr); // fallback to full date
+        };
+
+        list.innerHTML = students.map(s => `
+            <div class="activity-item">
+                <div class="activity-icon bg-primary"><i class="fas fa-user-plus"></i></div>
+                <div class="activity-content">
+                    <h4>${s.name} added</h4>
+                    <p>Added ${formatTimeAgo(s.createdAt)} • ${s.course}</p>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error("❌ Failed to render recent activity:", error);
+        showToast("Failed to load recent activity.", "error");
+    }
+}
         }
 
         // ============================= 
@@ -1028,152 +1331,334 @@ students
                     });
                 }
             }
-            static async openAddStudentModal(student = null) {
-                const modal = document.getElementById('addStudentModal');
-                const form = document.getElementById('studentForm');
-                const title = document.getElementById('studentModalTitle');
-                form.reset();
-                document.getElementById('studentId').value = '';
-                if (student) {
-                    title.innerText = 'Edit Student';
-                    document.getElementById('studentId').value = student.id || '';
-                    document.getElementById('studentName').value = student.name || '';
-                    document.getElementById('fatherName').value = student.fatherName || '';
-                    document.getElementById('admissionDate').value = student.admissionDate || '';
-                    document.getElementById('phone').value = student.phone || '';
-                    document.getElementById('course').value = student.course || '';
-                    document.getElementById('monthlyFee').value = student.monthlyFee || '';
-                } else {
-                    title.innerText = 'Add New Student';
-                }
-                const batches = await DataCache.getBatches();
-                const batchSelect = document.getElementById('batch');
-                if (batchSelect) {
-                    batchSelect.innerHTML = '<option value="">Select Batch</option>';
-                    batches.forEach(b => {
-                        const opt = document.createElement('option');
-                        opt.value = b.id;
-                        opt.textContent = b.name;
-                        batchSelect.appendChild(opt);
-                        if (student && b.id === student.batch) opt.selected = true;
-                    });
-                }
-                modal.style.display = 'flex';
+        static async openAddStudentModal(student = null) {
+    const modal = document.getElementById('addStudentModal');
+    const form = document.getElementById('studentForm');
+    const title = document.getElementById('studentModalTitle');
+    form.reset();
+    document.getElementById('studentId').value = '';
+
+    if (student) {
+        title.innerText = 'Edit Student';
+        document.getElementById('studentId').value = student.id || '';
+        document.getElementById('studentName').value = student.name || '';
+        document.getElementById('fatherName').value = student.fatherName || '';
+
+        // 👇👇👇 FIX: Convert ISO date to YYYY-MM-DD for <input type="date">
+        if (student.admissionDate) {
+            const isoDate = new Date(student.admissionDate);
+            if (!isNaN(isoDate.getTime())) {
+                const year = isoDate.getFullYear();
+                const month = String(isoDate.getMonth() + 1).padStart(2, '0');
+                const day = String(isoDate.getDate()).padStart(2, '0');
+                document.getElementById('admissionDate').value = `${year}-${month}-${day}`;
+            } else {
+                document.getElementById('admissionDate').value = ''; // fallback if invalid
             }
+        } else {
+            document.getElementById('admissionDate').value = '';
+        }
+
+        // Phone numbers
+        if (student.phone && Array.isArray(student.phone)) {
+            document.getElementById('phone').value = student.phone.join(', ');
+        } else {
+            document.getElementById('phone').value = '';
+        }
+
+        document.getElementById('course').value = student.course || '';
+        document.getElementById('monthlyFee').value = student.monthlyFee || '';
+    } else {
+        title.innerText = 'Add New Student';
+        document.getElementById('admissionDate').value = ''; // clear for new student
+    }
+
+    // Populate batch dropdown
+    const batches = await DataCache.getBatches();
+    const batchSelect = document.getElementById('batch');
+    if (batchSelect) {
+        batchSelect.innerHTML = '<option value="">Select Batch</option>';
+        batches.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b.id;
+            opt.textContent = b.name;
+            batchSelect.appendChild(opt);
+            if (student && b.id === student.batch) opt.selected = true;
+        });
+    }
+
+    modal.style.display = 'flex';
+}
             static isSaving = false; // ← Add this at top of Students class
 
-            static async saveStudent() {
-                if (this.isSaving) {
-                    showToast('Please wait... saving in progress.', 'error');
-                    return;
-                }
+          static async saveStudent() {
+    if (this.isSaving) {
+        showToast('Please wait... saving in progress.', 'error');
+        return;
+    }
 
-                this.isSaving = true;
+    this.isSaving = true;
 
-                const form = document.getElementById('studentForm');
-                const name = form.studentName.value.trim();
-                const fatherName = form.fatherName.value.trim();
-                const admissionDate = form.admissionDate.value.trim();
-                const course = form.course.value.trim();
-                const batch = form.batch.value.trim();
-                const monthlyFee = parseFloat(form.monthlyFee.value) || 0;
+    const form = document.getElementById('studentForm');
+    const name = form.studentName.value.trim();
+    const fatherName = form.fatherName.value.trim();
+    const admissionDateStr = form.admissionDate.value.trim();
+    if (!admissionDateStr) {
+        showToast('Admission date is required.', 'error');
+        this.isSaving = false;
+        return;
+    }
 
-                if (!name || !fatherName || !admissionDate || !course || !batch) {
-                    showToast('Fill all required fields.', 'error');
-                    this.isSaving = false; // ← Unlock
-                    return;
-                }
+    // Validate date format and range
+    const admissionDate = new Date(admissionDateStr);
+    if (isNaN(admissionDate.getTime())) {
+        showToast('Invalid admission date format.', 'error');
+        this.isSaving = false;
+        return;
+    }
 
-                const student = {
-                    name, fatherName, admissionDate, course, batch, monthlyFee,
-                    phone: form.phone.value.trim() || null, // ← Save as null if empty
-                    createdAt: new Date().toISOString(),
-                    deleted: false
-                };
+    // Define allowed range: Jan 1, 2024 → Dec 31, 2026
+    const minDate = new Date('2024-01-01');
+    const maxDate = new Date('2026-12-31');
 
-                const studentId = form.studentId.value.trim();
-                if (studentId) student.id = studentId;
+    if (admissionDate < minDate || admissionDate > maxDate) {
+        showToast('Admission date must be between Jan 2024 and Dec 2026.', 'error');
+        this.isSaving = false;
+        return;
+    }
 
-                try {
-                    await FirebaseStorage.saveStudent(student);
-                    DataCache.invalidate('students');
-                    DataCache.invalidate('fees');
-                    showToast('Student saved!', 'success');
-                    await this.renderStudents();
-                    this.closeAddStudentModal();
-                } catch (error) {
-                    console.error(error);
-                    showToast('Failed to save student.', 'error');
-                } finally {
-                    this.isSaving = false; // ← Always unlock
+    const admissionDateISO = admissionDate.toISOString(); // Use this for saving
+    const course = form.course.value.trim();
+    const batch = form.batch.value.trim();
+    const monthlyFee = parseFloat(form.monthlyFee.value) || 0;
+
+    if (!name || !fatherName || !admissionDate || !course || !batch) {
+        showToast('Fill all required fields.', 'error');
+        this.isSaving = false; // ← Unlock
+        return;
+    }
+
+    // Parse and validate multiple phone numbers
+    let phoneNumbers = [];
+    const phoneInput = form.phone.value.trim();
+    if (phoneInput) {
+        const rawNumbers = phoneInput.split(',').map(p => p.trim());
+        for (const num of rawNumbers) {
+            if (num === '') continue;
+            if (!/^[0-9]{10}$/.test(num)) {
+                showToast(`Invalid phone number: "${num}". Must be exactly 10 digits.`, 'error');
+                this.isSaving = false;
+                return;
+            }
+            phoneNumbers.push(num);
+        }
+    }
+    const phone = phoneNumbers.length > 0 ? phoneNumbers : null;
+
+    const student = {
+        name, fatherName, admissionDate: admissionDateISO, course, batch, monthlyFee,
+        phone,
+        createdAt: new Date().toISOString(),
+        deleted: false
+    };
+
+    const studentId = form.studentId.value.trim();
+    if (studentId) student.id = studentId;
+
+    try {
+        await FirebaseStorage.saveStudent(student);
+
+        // 👇👇👇 NEW: CLEAN UP OLD FEE RECORDS IF ADMISSION DATE MOVED FORWARD 👇👇👇
+        if (student.id) {
+            // Fetch existing student data to compare admission dates
+            const existingStudents = await DataCache.getStudents();
+            const existingStudent = existingStudents.find(s => s.id === student.id);
+
+            if (existingStudent && existingStudent.admissionDate !== student.admissionDate) {
+                const oldAdmission = new Date(existingStudent.admissionDate);
+                const newAdmission = new Date(student.admissionDate);
+
+                // Only clean up if new admission is LATER than old (forward shift)
+                if (newAdmission > oldAdmission) {
+                    console.log(`📅 Admission date moved forward from ${existingStudent.admissionDate} to ${student.admissionDate}. Cleaning up old fee records.`);
+
+                    // Fetch all fees for this student
+                    const allFees = await DataCache.getFees();
+                    const studentFees = allFees.filter(f => f.studentId === student.id);
+
+                    // Find fees that are BEFORE the new admission date
+                    const feesToDelete = studentFees.filter(fee => {
+                        const [year, month] = fee.month.split('-').map(Number); // "2023-05" → [2023, 5]
+                        const feeDate = new Date(year, month - 1, 1); // First day of fee month
+
+                        return feeDate < newAdmission; // Keep only if fee month >= new admission
+                    });
+
+                    if (feesToDelete.length > 0) {
+                        // Optional: Confirm with user
+                        const confirmed = confirm(
+                            `Admission date changed to ${formatDate(student.admissionDate)}.\n` +
+                            `This will permanently delete ${feesToDelete.length} outdated fee records from before this date.\n` +
+                            `Proceed?`
+                        );
+
+                        if (!confirmed) {
+                            this.isSaving = false;
+                            return; // Abort save if user cancels
+                        }
+
+                        showToast(`🧹 Deleting ${feesToDelete.length} outdated fee records...`, 'success');
+
+                        // Batch delete outdated fees
+                        const batch = writeBatch(db);
+                        feesToDelete.forEach(fee => {
+                            batch.delete(doc(db, "fees", fee.id));
+                        });
+                        await batch.commit();
+
+                        // Refresh cache
+                        DataCache.invalidate('fees');
+
+                        showToast(`✅ Deleted ${feesToDelete.length} outdated fee records.`, 'success');
+                    }
                 }
             }
+
+            // 👇👇👇 EXISTING LOGIC: Sync name, batch, course, and future unpaid fees 👇👇👇
+            try {
+                let fees = await DataCache.getFees();
+                const studentFees = fees.filter(f => f.studentId === student.id);
+
+                const today = new Date();
+
+                for (const fee of studentFees) {
+                    let updated = false;
+
+                    // Sync name, batch, course
+                    if (fee.studentName !== student.name) {
+                        fee.studentName = student.name;
+                        updated = true;
+                    }
+                    if (fee.batch !== student.batch) {
+                        fee.batch = student.batch;
+                        updated = true;
+                    }
+                    if (fee.course !== student.course) {
+                        fee.course = student.course;
+                        updated = true;
+                    }
+
+                    // Update amount ONLY for unpaid + current/future months
+                    const feeMonthStart = new Date(fee.month + "-01"); // e.g., "2024-06" → Jun 1, 2024
+                    if (
+                        student.monthlyFee &&
+                        !fee.paid &&
+                        feeMonthStart >= new Date(today.getFullYear(), today.getMonth(), 1) &&
+                        fee.amount !== student.monthlyFee
+                    ) {
+                        fee.amount = student.monthlyFee;
+                        updated = true;
+                    }
+
+                    if (updated) {
+                        await FirebaseStorage.saveFee(fee);
+                    }
+                }
+
+                // Force reload fees cache
+                DataCache.invalidate('fees');
+
+                // If user is on Fees tab, refresh UI immediately
+                if (App.getCurrentSection() === 'fees') {
+                    await Fees.renderFeeRecords();
+                }
+
+            } catch (err) {
+                console.warn("⚠️ Could not update fee records after student edit:", err);
+                // Don't break flow — student was still saved successfully
+            }
+        }
+        // 👆👆👆 END OF PATCH BLOCK 👆👆👆
+
+        DataCache.invalidate('students');
+        DataCache.invalidate('fees');
+        showToast('Student saved!', 'success');
+        await this.renderStudents();
+        this.closeAddStudentModal();
+    } catch (error) {
+        console.error(error);
+        showToast('Failed to save student.', 'error');
+    } finally {
+        this.isSaving = false; // ← Always unlock
+    }
+}
             static closeAddStudentModal() {
                 document.getElementById('addStudentModal').style.display = 'none';
             }
             static async renderStudents(filterText = '', batchFilter = '', courseFilter = '') {
-    try {
-        let students = (await DataCache.getStudents()).filter(s => !s.deleted);
+                showLoading('students');
+                try {
+                    let students = (await DataCache.getStudents()).filter(s => !s.deleted);
 
-        // >>> NEW: Create Batch ID → Name Map <<<
-        const batches = await DataCache.getBatches();
-        const batchMap = {};
-        batches.forEach(b => {
-            batchMap[b.id] = b.name || 'Unnamed Batch';
-        });
+                    // >>> NEW: Create Batch ID → Name Map <<<
+                    const batches = await DataCache.getBatches();
+                    const batchMap = {};
+                    batches.forEach(b => {
+                        batchMap[b.id] = b.name || 'Unnamed Batch';
+                    });
 
-        // >>> Populate Batch Filter <<<
-        const batchSelect = document.getElementById('filterByBatch');
-        if (batchSelect) {
-            batchSelect.innerHTML = '<option value="">All Batches</option>';
-            batches.forEach(b => {
-                const opt = document.createElement('option');
-                opt.value = b.id;
-                opt.textContent = b.name || 'Unnamed Batch';
-                if (b.id === batchFilter) opt.selected = true;
-                batchSelect.appendChild(opt);
-            });
-        }
+                    // >>> Populate Batch Filter <<<
+                    const batchSelect = document.getElementById('filterByBatch');
+                    if (batchSelect) {
+                        batchSelect.innerHTML = '<option value="">All Batches</option>';
+                        batches.forEach(b => {
+                            const opt = document.createElement('option');
+                            opt.value = b.id;
+                            opt.textContent = b.name || 'Unnamed Batch';
+                            if (b.id === batchFilter) opt.selected = true;
+                            batchSelect.appendChild(opt);
+                        });
+                    }
 
-        // >>> Populate Course Filter <<<
-        const courseSelect = document.getElementById('filterByCourse');
-        if (courseSelect) {
-            const uniqueCourses = [...new Set(students.map(s => s.course).filter(Boolean))];
-            courseSelect.innerHTML = '<option value="">All Courses</option>';
-            uniqueCourses.forEach(course => {
-                const opt = document.createElement('option');
-                opt.value = course;
-                opt.textContent = course;
-                if (course === courseFilter) opt.selected = true;
-                courseSelect.appendChild(opt);
-            });
-        }
+                    // >>> Populate Course Filter <<<
+                    const courseSelect = document.getElementById('filterByCourse');
+                    if (courseSelect) {
+                        const uniqueCourses = [...new Set(students.map(s => s.course).filter(Boolean))];
+                        courseSelect.innerHTML = '<option value="">All Courses</option>';
+                        uniqueCourses.forEach(course => {
+                            const opt = document.createElement('option');
+                            opt.value = course;
+                            opt.textContent = course;
+                            if (course === courseFilter) opt.selected = true;
+                            courseSelect.appendChild(opt);
+                        });
+                    }
 
-        // Apply search filter
-        if (filterText) {
-            const term = filterText.toLowerCase();
-            students = students.filter(s =>
-                (s.name?.toLowerCase().includes(term)) ||
-                (s.fatherName?.toLowerCase().includes(term))
-            );
-        }
+                    // Apply search filter
+                    if (filterText) {
+                        const term = filterText.toLowerCase();
+                        students = students.filter(s =>
+                            (s.name?.toLowerCase().includes(term)) ||
+                            (s.fatherName?.toLowerCase().includes(term))
+                        );
+                    }
 
-        // Apply batch filter
-        if (batchFilter) students = students.filter(s => s.batch === batchFilter);
+                    // Apply batch filter
+                    if (batchFilter) students = students.filter(s => s.batch === batchFilter);
 
-        // Apply course filter
-        if (courseFilter) students = students.filter(s => s.course === courseFilter);
+                    // Apply course filter
+                    if (courseFilter) students = students.filter(s => s.course === courseFilter);
 
-        const tbody = document.getElementById('studentsTableBody');
-        if (!tbody) return;
+                    const tbody = document.getElementById('studentsTableBody');
+                    if (!tbody) return;
 
-        if (students.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8">No active students found.</td></tr>';
-            return;
-        }
+                    if (students.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8">No active students found.</td></tr>';
+                        return;
+                    }
 
-        // Render table rows with readable batch names
-        tbody.innerHTML = students.map(s => `
+                    // Render table rows with readable batch names
+                    tbody.innerHTML = students.map(s => `
             <tr>
                 <td>${s.id?.substring(0, 6).toUpperCase() || '—'}</td>
                 <td>${s.name || '—'}</td>
@@ -1193,11 +1678,13 @@ students
             </tr>
         `).join('');
 
-    } catch (error) {
-        console.error(error);
-        showToast('Failed to load students.', 'error');
-    }
-}
+                } catch (error) {
+                    console.error(error);
+                    showToast('Failed to load students.', 'error');
+                } finally {
+                    hideLoading('students'); // Hide loading
+                }
+            }
             static filterStudents(query) {
                 const b = document.getElementById('filterByBatch')?.value || '';
                 const c = document.getElementById('filterByCourse')?.value || '';
@@ -1242,51 +1729,49 @@ students
                 document.getElementById('cancelUpdateBatchBtn')?.addEventListener('click', () => this.closeUpdateStudentBatchModal());
                 document.getElementById('closeUpdateBatchModal')?.addEventListener('click', () => this.closeUpdateStudentBatchModal());
             }
-         static async renderBatchSelector() {
-    try {
-        const selector = document.getElementById('batchSelector');
-        if (!selector) return;
-        selector.innerHTML = '<option value="">Loading...</option>';
-        selector.disabled = true;
-        const batches = await DataCache.getBatches();
-        selector.disabled = false;
-        selector.innerHTML = batches.length === 0 ? '<option value="">No batches — add one</option>' : '<option value="">Select a Batch</option>';
-        batches.forEach(b => {
-            const opt = document.createElement('option');
-            opt.value = b.id;
-            opt.textContent = b.name || 'Unnamed';
-            selector.appendChild(opt);
-        }); const newBatchSelect = document.getElementById('newBatch');
-        if (newBatchSelect) {
-            newBatchSelect.innerHTML = '<option value="">Select Batch</option>';
-            batches.forEach(b => {
-                const opt = document.createElement('option');
-                opt.value = b.id;
-                opt.textContent = b.name;
-                newBatchSelect.appendChild(opt);
-            });
-        }
-        if (batches.length === 1) {
-            selector.value = batches[0].id;
-            this.loadBatchDetails(batches[0].id);
-        }
-    } catch (error) {
-        console.error(error);
-        showToast("Failed to load batches.", "error");
-        const s = document.getElementById('batchSelector');
-        if (s) {
-            s.innerHTML = '<option value="">Error loading</option>';
-            s.disabled = false;
-        }
-    }
-}
+            static async renderBatchSelector() {
+                showLoading('batches');
+                try {
+                    const selector = document.getElementById('batchSelector');
+                    if (!selector) return;
+                    selector.innerHTML = '<option value="">Loading...</option>';
+                    selector.disabled = true;
+                    const batches = await DataCache.getBatches();
+                    selector.disabled = false;
+                    selector.innerHTML = batches.length === 0 ? '<option value="">No batches — add one</option>' : '<option value="">Select a Batch</option>';
+                    batches.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.name || 'Unnamed';
+                        selector.appendChild(opt);
+                    }); const newBatchSelect = document.getElementById('newBatch');
+                    if (newBatchSelect) {
+                        newBatchSelect.innerHTML = '<option value="">Select Batch</option>';
+                        batches.forEach(b => {
+                            const opt = document.createElement('option');
+                            opt.value = b.id;
+                            opt.textContent = b.name;
+                            newBatchSelect.appendChild(opt);
+                        });
+                    }
+                    if (batches.length === 1) {
+                        selector.value = batches[0].id;
+                        this.loadBatchDetails(batches[0].id);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showToast("Failed to load batches.", "error");
+                } finally {
+                    hideLoading('batches'); // Hide loading
+                }
+            }
 
             static async loadBatchDetails(batchId) {
                 if (!batchId) {
                     this.clearBatchDetails();
                     return;
                 }
-
+                showLoading('batches');
                 try {
                     const [students, batches] = await Promise.all([
                         DataCache.getStudents(),
@@ -1306,6 +1791,8 @@ students
                 } catch (error) {
                     console.error("❌ Failed to load batch details:", error);
                     showToast("Failed to load batch details.", "error");
+                } finally {
+                    hideLoading('batches'); // Hide loading
                 }
             }
 
@@ -1320,35 +1807,34 @@ students
         `;
             }
 
-            static renderStudentsInBatch(students) {
-                const tbody = document.getElementById('batchStudentsTable');
-                if (!tbody) return;
+           static renderStudentsInBatch(students) {
+    const tbody = document.getElementById('batchStudentsTable');
+    if (!tbody) return;
 
-                if (students.length === 0) {
-                    tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="no-data">No students in this batch.</td>
-                </tr>
-            `;
-                    return;
-                }
-
-                tbody.innerHTML = students.map(student => `
+    if (students.length === 0) {
+        tbody.innerHTML = `
             <tr>
-                <td>${student.id.substring(0, 6).toUpperCase()}</td>
-                <td>${student.name}</td>
-                <td>${student.course}</td>
-                <td>₹${(student.monthlyFee || 0).toLocaleString()}</td>
-                <td>${formatDate(student.admissionDate)}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="Batches.openUpdateStudentBatchModal('${student.id}')">
-                        <i class="fas fa-exchange-alt"></i> Change Batch
-                    </button>
-                </td>
+                <td colspan="6" class="no-data">No students in this batch.</td>
             </tr>
-        `).join('');
-            }
+        `;
+        return;
+    }
 
+    tbody.innerHTML = students.map((student, index) => `
+        <tr>
+            <td>${index + 1}</td> <!-- 👈 SERIAL NUMBER -->
+            <td>${student.name}</td>
+            <td>${student.course}</td>
+            <td>₹${(student.monthlyFee || 0).toLocaleString()}</td>
+            <td>${formatDate(student.admissionDate)}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="Batches.openUpdateStudentBatchModal('${student.id}')">
+                    <i class="fas fa-exchange-alt"></i> Change Batch
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
             static openAddBatchModal(batch = null) {
                 const modal = document.getElementById('addBatchModal');
                 const form = document.getElementById('batchForm');
@@ -1375,72 +1861,72 @@ students
 
             static isSaving = false; // ← Add at top of Batches class
 
-           static async saveBatch() {
-    if (this.isSaving) {
-        showToast('Please wait... saving in progress.', 'error');
-        return;
-    }
+            static async saveBatch() {
+                if (this.isSaving) {
+                    showToast('Please wait... saving in progress.', 'error');
+                    return;
+                }
 
-    this.isSaving = true;
+                this.isSaving = true;
 
-    const form = document.getElementById('batchForm');
-    const batchName = form.batchName.value.trim();
-    const timing = form.timing.value.trim();
-    const batchId = form.batchId.value.trim();
+                const form = document.getElementById('batchForm');
+                const batchName = form.batchName.value.trim();
+                const timing = form.timing.value.trim();
+                const batchId = form.batchId.value.trim();
 
-    if (!batchName) {
-        showToast('Batch name is required.', 'error');
-        this.isSaving = false;
-        return;
-    }
+                if (!batchName) {
+                    showToast('Batch name is required.', 'error');
+                    this.isSaving = false;
+                    return;
+                }
 
-    const batchObj = {
-        name: batchName,
-        timing: timing || '',
-        createdAt: new Date().toISOString()
-    };
+                const batchObj = {
+                    name: batchName,
+                    timing: timing || '',
+                    createdAt: new Date().toISOString()
+                };
 
-    try {
-        let result;
-        if (batchId) {
-            batchObj.id = batchId;
-            result = await FirebaseStorage.saveBatch(batchObj);
-            showToast('Batch updated successfully!', 'success');
-        } else {
-            result = await FirebaseStorage.saveBatch(batchObj);
-            showToast('Batch added successfully!', 'success');
-        }
+                try {
+                    let result;
+                    if (batchId) {
+                        batchObj.id = batchId;
+                        result = await FirebaseStorage.saveBatch(batchObj);
+                        showToast('Batch updated successfully!', 'success');
+                    } else {
+                        result = await FirebaseStorage.saveBatch(batchObj);
+                        showToast('Batch added successfully!', 'success');
+                    }
 
-        // 👇 CRITICAL FIX: Invalidate cache BEFORE reloading
-        DataCache.invalidate('batches');
-        
-        // 👇 Wait for fresh data to be loaded
-        await this.renderBatchSelector();
+                    // 👇 CRITICAL FIX: Invalidate cache BEFORE reloading
+                    DataCache.invalidate('batches');
 
-        this.closeBatchModal();
+                    // 👇 Wait for fresh data to be loaded
+                    await this.renderBatchSelector();
 
-        // If this was a new batch, auto-select it
-        if (!batchId && result?.id) {
-            const selector = document.getElementById('batchSelector');
-            if (selector) {
-                selector.value = result.id;
-                await this.loadBatchDetails(result.id);
+                    this.closeBatchModal();
+
+                    // If this was a new batch, auto-select it
+                    if (!batchId && result?.id) {
+                        const selector = document.getElementById('batchSelector');
+                        if (selector) {
+                            selector.value = result.id;
+                            await this.loadBatchDetails(result.id);
+                        }
+                    } else {
+                        // For edit, refresh current batch if it's the one being edited
+                        const currentBatchId = document.getElementById('batchSelector')?.value;
+                        if (currentBatchId === (result.id || batchId)) {
+                            await this.loadBatchDetails(currentBatchId);
+                        }
+                    }
+
+                } catch (error) {
+                    console.error("❌ Failed to save batch:", error);
+                    showToast('Failed to save batch: ' + (error.message || 'Unknown error'), 'error');
+                } finally {
+                    this.isSaving = false;
+                }
             }
-        } else {
-            // For edit, refresh current batch if it's the one being edited
-            const currentBatchId = document.getElementById('batchSelector')?.value;
-            if (currentBatchId === (result.id || batchId)) {
-                await this.loadBatchDetails(currentBatchId);
-            }
-        }
-
-    } catch (error) {
-        console.error("❌ Failed to save batch:", error);
-        showToast('Failed to save batch: ' + (error.message || 'Unknown error'), 'error');
-    } finally {
-        this.isSaving = false;
-    }
-}
 
             static async deleteCurrentBatch() {
                 const selector = document.getElementById('batchSelector');
@@ -1455,30 +1941,30 @@ students
                     return;
                 }
 
-               try {
-    await FirebaseStorage.deleteBatch(batchId);
-    showToast('Batch deleted successfully!', 'success');
+                try {
+                    await FirebaseStorage.deleteBatch(batchId);
+                    showToast('Batch deleted successfully!', 'success');
 
-    // 👇 CRITICAL: Invalidate BEFORE reloading
-    DataCache.invalidate('batches');
+                    // 👇 CRITICAL: Invalidate BEFORE reloading
+                    DataCache.invalidate('batches');
 
-    // 👇 Wait for fresh data and re-render selector
-    await this.renderBatchSelector();
+                    // 👇 Wait for fresh data and re-render selector
+                    await this.renderBatchSelector();
 
-    // 👇 Clear current batch details (since deleted batch shouldn't be shown)
-    this.clearBatchDetails();
+                    // 👇 Clear current batch details (since deleted batch shouldn't be shown)
+                    this.clearBatchDetails();
 
-    // 👇 Auto-select first batch if any exists
-    const selector = document.getElementById('batchSelector');
-    if (selector && selector.options.length > 1) { // >1 because first is placeholder
-        selector.selectedIndex = 1; // Select first real batch
-        await this.loadBatchDetails(selector.value);
-    }
+                    // 👇 Auto-select first batch if any exists
+                    const selector = document.getElementById('batchSelector');
+                    if (selector && selector.options.length > 1) { // >1 because first is placeholder
+                        selector.selectedIndex = 1; // Select first real batch
+                        await this.loadBatchDetails(selector.value);
+                    }
 
-} catch (error) {
-    console.error("❌ Failed to delete batch:", error);
-    showToast('Failed to delete batch: ' + error.message, 'error');
-}
+                } catch (error) {
+                    console.error("❌ Failed to delete batch:", error);
+                    showToast('Failed to delete batch: ' + error.message, 'error');
+                }
             }
 
             static openUpdateStudentBatchModal(studentId) {
@@ -1528,13 +2014,267 @@ students
         }
 
         // =============================
-        // 💰 FEES MODULE
+        // 💰 FEES MODULE (PATCHED FOR PERFORMANCE)
         // =============================
         class Fees {
-            static async init() {
-                await this.ensureFeeRecordsForAllStudents();
-                await this.renderFeeRecords();
-                this.bindEvents();
+            static currentSyncPromise = null; // ← Prevent duplicate syncs
+            static isRecording = false;
+
+
+  static async init() {
+    // 👇 1. Populate filters FIRST
+    this.populateYearFilter(); // Sync - fills year dropdown
+
+    // Optional: micro-delay to ensure DOM rendered (usually not needed)
+    // await new Promise(r => setTimeout(r, 0));
+
+    // Start background sync
+    this.startBackgroundSync();
+
+    const now = new Date();
+    const currentMonth = now.getMonth();      // e.g., 5 for June
+    const currentYear = now.getFullYear();     // e.g., 2025
+
+    const monthFilter = document.getElementById('monthFilter');
+    const yearFilter = document.getElementById('yearFilter');
+
+    let filtersChanged = false;
+
+    // 👇 2. Set Month Filter
+    if (monthFilter) {
+        const currentMonthStr = String(currentMonth);
+        const option = Array.from(monthFilter.options).find(opt => opt.value === currentMonthStr);
+        if (option && monthFilter.value !== currentMonthStr) {
+            monthFilter.value = currentMonthStr;
+            filtersChanged = true;
+        }
+    }
+
+    // 👇 3. Set Year Filter — AFTER populateYearFilter()
+    if (yearFilter && yearFilter.options.length > 1) {
+        const currentYearStr = String(currentYear);
+        const option = Array.from(yearFilter.options).find(opt => opt.value === currentYearStr);
+        if (option && yearFilter.value !== currentYearStr) {
+            yearFilter.value = currentYearStr;
+            filtersChanged = true;
+        }
+    }
+
+    // 👇 4. Render or Apply Filters
+    if (filtersChanged) {
+        this.applyFilters(); // Re-renders table with new filters
+    } else {
+        await this.renderFeeRecords(); // Initial render
+    }
+
+    // 👇 5. Bind events (search, change handlers, etc.)
+    this.bindEvents();
+}
+
+            static startBackgroundSync() {
+                if (this.currentSyncPromise) {
+                    return this.currentSyncPromise;
+                }
+                this.currentSyncPromise = (async () => {
+                    try {
+                        await this.ensureFeeRecordsForAllStudents();
+                    } finally {
+                        this.currentSyncPromise = null;
+                    }
+                })();
+                return this.currentSyncPromise;
+            }
+
+            static async ensureFeeRecordsForAllStudents() {
+                const statusEl = document.getElementById('feeSyncStatus');
+                let progressToast = null;
+
+                // Show sync status in UI
+                if (statusEl) statusEl.style.display = 'block';
+
+                // Initial user feedback
+                showToast("🔄 Starting background fee sync...", "success");
+
+                try {
+                    const [students, fees] = await Promise.all([
+                        DataCache.getStudents(),
+                        DataCache.getFees()
+                    ]);
+
+                    const today = new Date();
+                    const currentYear = today.getFullYear();
+                    const currentMonth = today.getMonth();
+
+                    // Existing fee keys for quick lookup
+                    const existingKeys = new Set(fees.map(f => `${f.studentId}-${f.month}`));
+
+                    // Collect missing fees
+                    const newFeesToCreate = [];
+
+                    for (const student of students.filter(s => !s.deleted)) {
+                        const admissionDate = new Date(student.admissionDate);
+                        if (isNaN(admissionDate)) continue; // Skip invalid dates
+
+                        for (let year = admissionDate.getFullYear(); year <= currentYear; year++) {
+                            const startMonth = (year === admissionDate.getFullYear()) ? admissionDate.getMonth() : 0;
+                            const endMonth = (year === currentYear) ? currentMonth : 11;
+
+                            for (let m = startMonth; m <= endMonth; m++) {
+                                const monthKey = `${year}-${String(m + 1).padStart(2, '0')}`;
+                                const compositeKey = `${student.id}-${monthKey}`;
+                                if (existingKeys.has(compositeKey)) continue;
+
+                                newFeesToCreate.push({
+                                    studentId: student.id,
+                                    studentName: student.name,
+                                    month: monthKey,
+                                    amount: student.monthlyFee || 0,
+                                    amountPaid: 0,
+                                    paid: false,
+                                    paidDate: null,
+                                    batch: student.batch,
+                                    course: student.course,
+                                    ownerId: CURRENT_USER_ID
+                                });
+                            }
+                        }
+                    }
+
+                    if (newFeesToCreate.length === 0) {
+                        showToast("✅ No missing fee records. All synced!", "success");
+                        return;
+                    }
+
+                    // Notify user about scale
+                    showToast(`🆕 Found ${newFeesToCreate.length} missing fee records. Syncing in background...`, "success");
+
+                    const BATCH_LIMIT = 400;
+                    const totalBatches = Math.ceil(newFeesToCreate.length / BATCH_LIMIT);
+
+                    // Process in chunks with progress feedback
+                    for (let i = 0; i < newFeesToCreate.length; i += BATCH_LIMIT) {
+                        const batchIndex = Math.floor(i / BATCH_LIMIT) + 1;
+                        const sub = newFeesToCreate.slice(i, i + BATCH_LIMIT);
+
+                        // Update progress toast
+                        const progressMessage = `⏳ Syncing fees: Batch ${batchIndex}/${totalBatches} (${sub.length} records)`;
+                        if (progressToast) {
+                            progressToast.querySelector('span').textContent = progressMessage;
+                        } else {
+                            progressToast = document.createElement('div');
+                            progressToast.className = 'toast success';
+                            progressToast.style.cssText = `
+                    position: fixed; top: 70px; right: 20px; 
+                    background: #d1e7dd; color: #0f5132; 
+                    border: 1px solid #badbcc; padding: 12px 20px; 
+                    border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+                    z-index: 10000; font-weight: 500; display: flex; align-items: center; gap: 8px;
+                    animation: slideInRight 0.3s ease forwards;
+                `;
+                            progressToast.innerHTML = `<i class="fas fa-sync fa-spin"></i> <span>${progressMessage}</span>`;
+                            document.body.appendChild(progressToast);
+
+                            // Auto-remove after 3 sec if not updated
+                            setTimeout(() => {
+                                if (document.body.contains(progressToast) && !progressToast.classList.contains('fading')) {
+                                    progressToast.style.animation = 'slideOutRight 0.3s ease forwards';
+                                    setTimeout(() => { if (progressToast.parentNode) progressToast.remove(); }, 300);
+                                }
+                            }, 3000);
+                        }
+
+                        // Write batch to Firestore
+                        const batch = writeBatch(db);
+                        sub.forEach(fee => {
+                            const newDocRef = doc(collection(db, "fees"));
+                            batch.set(newDocRef, fee);
+                        });
+
+                        await batch.commit();
+                        console.log(`✅ Committed batch ${batchIndex}/${totalBatches}: ${sub.length} records`);
+                    }
+
+                    // Final cleanup and cache refresh
+                    DataCache.invalidate("fees");
+
+                    // Clear progress toast
+                    if (progressToast) {
+                        progressToast.classList.add('fading');
+                        progressToast.style.animation = 'slideOutRight 0.3s ease forwards';
+                        setTimeout(() => { if (progressToast.parentNode) progressToast.remove(); }, 300);
+                    }
+
+                    // Success summary
+                    showToast(`🎉 Sync complete! Added ${newFeesToCreate.length} fee records.`, 'success');
+
+                } catch (error) {
+                    console.error("❌ Failed to ensure fee records:", error);
+
+                    // Error toast
+                    showToast(`❌ Fee sync failed: ${error.message || 'Unknown error'}`, "error");
+
+                } finally {
+                    // Always hide sync status bar
+                    if (statusEl) statusEl.style.display = 'none';
+                }
+            }
+            static async ensureFeeRecordsForStudent(studentId, studentData) {
+                try {
+                    const fees = await DataCache.getFees();
+                    const existingKeys = new Set(fees.map(f => `${f.studentId}-${f.month}`));
+
+                    const today = new Date();
+                    const currentYear = today.getFullYear();
+                    const currentMonth = today.getMonth();
+
+                    const admissionDate = new Date(studentData.admissionDate);
+                    if (isNaN(admissionDate)) return [];
+
+                    const newFeesToCreate = [];
+
+                    for (let year = admissionDate.getFullYear(); year <= currentYear; year++) {
+                        const startMonth = (year === admissionDate.getFullYear()) ? admissionDate.getMonth() : 0;
+                        const endMonth = (year === currentYear) ? currentMonth : 11;
+
+                        for (let m = startMonth; m <= endMonth; m++) {
+                            const monthKey = `${year}-${String(m + 1).padStart(2, '0')}`;
+                            const compositeKey = `${studentId}-${monthKey}`;
+                            if (existingKeys.has(compositeKey)) continue;
+
+                            newFeesToCreate.push({
+                                studentId,
+                                studentName: studentData.name,
+                                month: monthKey,
+                                amount: studentData.monthlyFee || 0,
+                                amountPaid: 0,
+                                paid: false,
+                                paidDate: null,
+                                batch: studentData.batch,
+                                course: studentData.course,
+                                ownerId: CURRENT_USER_ID
+                            });
+                        }
+                    }
+
+                    if (newFeesToCreate.length > 0) {
+                        console.log(`🆕 Creating ${newFeesToCreate.length} fee records for student ${studentData.name}`);
+
+                        // Write in one batch (safe under 500)
+                        const batch = writeBatch(db);
+                        newFeesToCreate.forEach(fee => {
+                            const newDocRef = doc(collection(db, "fees"));
+                            batch.set(newDocRef, fee);
+                        });
+
+                        await batch.commit();
+                        DataCache.invalidate("fees"); // Refresh cache after write
+                    }
+
+                    return newFeesToCreate;
+                } catch (error) {
+                    console.error("❌ Failed to ensure fee records for student:", error);
+                    throw error;
+                }
             }
 
             static bindEvents() {
@@ -1554,61 +2294,61 @@ students
 
                 this.populateYearFilter();
                 this.populateStudentSelect();
-            }
+              document.getElementById('holdPaymentCheckbox')?.addEventListener('change', (e) => {
+    const isChecked = e.target.checked;
+    const selectorDiv = document.getElementById('holdMonthSelectors');
+    const monthSelect = document.getElementById('holdMonthSelect');
+    const yearSelect = document.getElementById('holdYearSelect');
+    const paymentFields = document.getElementById('paymentFields');
+    const amountPaidInput = document.getElementById('amountPaid');
+    const submitBtn = document.querySelector('#payFeeForm .btn-primary');
+    const notesLabel = document.querySelector('label[for="paymentNotes"]');
 
-            static async ensureFeeRecordsForAllStudents() {
-                try {
-                    const [students, fees] = await Promise.all([
-                        DataCache.getStudents(),
-                        DataCache.getFees()
-                    ]);
+    if (isChecked) {
+        // SHOW hold selectors
+        selectorDiv.style.display = 'block';
+        monthSelect.disabled = false;
+        yearSelect.disabled = false;
 
-                    let updated = false;
-                    const today = new Date();
-                    const currentYear = today.getFullYear();
-                    const currentMonth = today.getMonth();
+        // DISABLE payment fields
+        if (paymentFields) paymentFields.style.opacity = '0.6';
+        if (amountPaidInput) {
+            amountPaidInput.disabled = true;
+            amountPaidInput.value = ''; // clear if any
+        }
 
-                    for (const student of students.filter(s => !s.deleted)) {
-                        const admissionDate = new Date(student.admissionDate);
-                        const admissionYear = admissionDate.getFullYear();
-                        const admissionMonth = admissionDate.getMonth();
+        // Update UI text
+        if (notesLabel) notesLabel.textContent = 'Hold Reason (Optional)';
+        if (submitBtn) submitBtn.textContent = 'Apply Hold';
 
-                        for (let year = admissionYear; year <= currentYear; year++) {
-                            let startMonth = (year === admissionYear) ? admissionMonth : 0;
-                            let endMonth = (year === currentYear) ? currentMonth : 11;
+        // Auto-set current month/year
+        const now = new Date();
+        monthSelect.value = now.getMonth();
+        yearSelect.value = now.getFullYear();
 
-                            for (let month = startMonth; month <= endMonth; month++) {
-                                const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+    } else {
+        // HIDE hold selectors
+        selectorDiv.style.display = 'none';
+        monthSelect.disabled = true;
+        yearSelect.disabled = true;
 
-                                if (fees.some(f => f.studentId === student.id && f.month === monthKey)) continue;
+        // ENABLE payment fields
+        if (paymentFields) paymentFields.style.opacity = '1';
+        if (amountPaidInput) {
+            amountPaidInput.disabled = false;
+        }
 
-                                const newFee = {
-                                    studentId: student.id,
-                                    studentName: student.name,
-                                    month: monthKey,
-                                    amount: student.monthlyFee || 0,
-                                    amountPaid: 0,
-                                    paid: false,
-                                    paidDate: null,
-                                    batch: student.batch,
-                                    course: student.course
-                                };
+        // Reset UI text
+        if (notesLabel) notesLabel.textContent = 'Notes (Optional)';
+        if (submitBtn) submitBtn.textContent = 'Record Payment';
+    }
 
-                                await FirebaseStorage.saveFee(newFee);
-                                fees.push(newFee);
-                                updated = true;
-                            }
-                        }
-                    }
-
-                    if (updated) {
-                        console.log("✅ Generated missing fee records for all students");
-                        DataCache.invalidate('fees');
-                    }
-                } catch (error) {
-                    console.error("Failed to ensure fee records:", error);
-                    showToast("Failed to sync fee records.", "error");
-                }
+    // Re-calculate due amount
+    const studentId = document.getElementById('studentSelect').value;
+    if (studentId) {
+        Fees.updateAmountDue(studentId);
+    }
+});
             }
 
             static populateYearFilter() {
@@ -1629,7 +2369,44 @@ students
                     });
                 });
             }
+            static populateHoldYearSelect() {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear - 2; i <= currentYear + 1; i++) {
+        years.push(i);
+    }
 
+    const select = document.getElementById('holdYearSelect');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Select Year</option>';
+    years.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        select.appendChild(option);
+    });
+}
+static openPayFeeModal() {
+    this.populateStudentSelect();
+    this.populateHoldYearSelect(); // ← Populate year dropdown
+
+    document.getElementById('payFeeForm').reset();
+    document.getElementById('amountDue').value = 0;
+
+    // Reset hold UI state
+    const holdCheckbox = document.getElementById('holdPaymentCheckbox');
+    const selectorDiv = document.getElementById('holdMonthSelectors');
+    const monthSelect = document.getElementById('holdMonthSelect');
+    const yearSelect = document.getElementById('holdYearSelect');
+
+    if (holdCheckbox) holdCheckbox.checked = false;
+    if (selectorDiv) selectorDiv.style.display = 'none';
+    if (monthSelect) monthSelect.disabled = true;
+    if (yearSelect) yearSelect.disabled = true;
+
+    document.getElementById('payFeeModal').style.display = 'flex';
+}
             static async populateStudentSelect(includeArchived = false) {
                 try {
                     let students = await DataCache.getStudents();
@@ -1670,29 +2447,62 @@ students
                 }
             }
 
-            static async updateAmountDue(studentId) {
-                if (!studentId) {
-                    document.getElementById('amountDue').value = 0;
-                    return;
-                }
+          static async updateAmountDue(studentId) {
+    if (!studentId) {
+        document.getElementById('amountDue').value = 0;
+        return;
+    }
 
-                try {
-                    const fees = await DataCache.getFees();
-                    const studentFees = fees.filter(f => f.studentId === studentId && !f.paid);
-                    const totalDue = studentFees.reduce((sum, f) => sum + (f.amount - (f.amountPaid || 0)), 0);
-                    document.getElementById('amountDue').value = totalDue;
-                } catch (error) {
-                    console.error("Failed to calculate due amount:", error);
-                    showToast("Failed to load due amount.", "error");
-                }
-            }
+    try {
+        const fees = await DataCache.getFees();
+        const holdChecked = document.getElementById('holdPaymentCheckbox')?.checked || false;
 
-            static openPayFeeModal() {
-                this.populateStudentSelect(); // ← Already here — GOOD!
-                document.getElementById('payFeeForm').reset();
-                document.getElementById('amountDue').value = 0;
-                document.getElementById('payFeeModal').style.display = 'flex';
+        let studentFees = fees.filter(f =>
+            f.studentId === studentId &&
+            !f.paid &&
+            !f.hold
+        );
+
+        // If holding a SPECIFIC month, exclude THAT month
+        if (holdChecked) {
+            const holdMonth = document.getElementById('holdMonthSelect')?.value;
+            const holdYear = document.getElementById('holdYearSelect')?.value;
+
+            if (holdMonth !== '' && holdYear !== '') {
+                const holdMonthStr = `${holdYear}-${String(Number(holdMonth) + 1).padStart(2, '0')}`;
+                studentFees = studentFees.filter(f => f.month !== holdMonthStr);
             }
+            // If not selected yet, don't filter — wait for user input
+        }
+
+        const totalDue = studentFees.reduce((sum, f) => sum + (f.amount - (f.amountPaid || 0)), 0);
+        document.getElementById('amountDue').value = totalDue;
+
+    } catch (error) {
+        console.error("Failed to calculate due amount:", error);
+        showToast("Failed to load due amount.", "error");
+    }
+}
+          static openPayFeeModal() {
+    this.populateStudentSelect();
+    this.populateHoldYearSelect(); // ← Populate year dropdown
+
+    document.getElementById('payFeeForm').reset();
+    document.getElementById('amountDue').value = 0;
+
+    // Reset hold UI state
+    const holdCheckbox = document.getElementById('holdPaymentCheckbox');
+    const selectorDiv = document.getElementById('holdMonthSelectors');
+    const monthSelect = document.getElementById('holdMonthSelect');
+    const yearSelect = document.getElementById('holdYearSelect');
+
+    if (holdCheckbox) holdCheckbox.checked = false;
+    if (selectorDiv) selectorDiv.style.display = 'none';
+    if (monthSelect) monthSelect.disabled = true;
+    if (yearSelect) yearSelect.disabled = true;
+
+    document.getElementById('payFeeModal').style.display = 'flex';
+}
 
             static closePayFeeModal() {
                 document.getElementById('payFeeModal').style.display = 'none';
@@ -1702,154 +2512,267 @@ students
                 document.getElementById('viewPaymentModal').style.display = 'none';
             }
 
-            static isRecording = false; // ← Add at top of Fees class
+          static async recordPayment() {
+    if (this.isRecording) {
+        showToast('Payment recording in progress. Please wait.', 'error');
+        return;
+    }
 
-            static async recordPayment() {
-                if (this.isRecording) {
-                    showToast('Payment recording in progress. Please wait.', 'error');
-                    return;
-                }
+    this.isRecording = true;
 
-                this.isRecording = true;
+    const studentId = document.getElementById('studentSelect').value;
+    const amountDue = parseFloat(document.getElementById('amountDue').value);
+    const amountPaid = parseFloat(document.getElementById('amountPaid').value);
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const paymentNotes = document.getElementById('paymentNotes').value.trim();
+   const holdChecked = document.getElementById('holdPaymentCheckbox')?.checked || false;
 
-                const studentId = document.getElementById('studentSelect').value;
-                const amountDue = parseFloat(document.getElementById('amountDue').value);
-                const amountPaid = parseFloat(document.getElementById('amountPaid').value);
-                const paymentMethod = document.getElementById('paymentMethod').value;
-                const paymentNotes = document.getElementById('paymentNotes').value.trim();
+if (!studentId) {
+    showToast('Please select a student.', 'error');
+    this.isRecording = false;
+    return;
+}
 
-                if (!studentId || isNaN(amountDue) || isNaN(amountPaid) || amountPaid <= 0) {
-                    showToast('Please fill all required fields correctly.', 'error');
-                    this.isRecording = false;
-                    return;
-                }
+// 👇 ONLY validate amountPaid if NOT holding
+if (!holdChecked) {
+    if (isNaN(amountDue) || isNaN(amountPaid) || amountPaid < 0) {
+        showToast('Please enter a valid payment amount.', 'error');
+        this.isRecording = false;
+        return;
+    }
+}
 
-                if (amountPaid > amountDue) {
-                    showToast('Paid amount cannot exceed due amount.', 'error');
-                    this.isRecording = false;
-                    return;
-                }
+    try {
+        // Ensure student exists
+        const students = await DataCache.getStudents();
+        const studentData = students.find(s => s.id === studentId);
+        if (!studentData) throw new Error("Student not found.");
 
-                try {
-                    let fees = await DataCache.getFees();
-                    const unpaidFees = fees.filter(f => f.studentId === studentId && !f.paid).sort((a, b) => a.month.localeCompare(b.month));
+        // Ensure fee records exist for student
+        await this.ensureFeeRecordsForStudent(studentId, studentData);
 
-                    let remainingPayment = amountPaid;
+        // 👇 HANDLE HOLDING SPECIFIC MONTH
+        if (holdChecked) {
+            const holdMonth = document.getElementById('holdMonthSelect')?.value;
+            const holdYear = document.getElementById('holdYearSelect')?.value;
 
-                    for (let fee of unpaidFees) {
-                        if (remainingPayment <= 0) break;
-
-                        const outstanding = fee.amount - (fee.amountPaid || 0);
-
-                        if (remainingPayment >= outstanding) {
-                            fee.amountPaid = fee.amount;
-                            fee.paid = true;
-                            fee.paidDate = new Date().toISOString();
-                            fee.paymentMethod = paymentMethod;
-                            fee.paymentNotes = paymentNotes;
-                            remainingPayment -= outstanding;
-                        } else {
-                            fee.amountPaid = (fee.amountPaid || 0) + remainingPayment;
-                            fee.partial = true;
-                            fee.paidDate = new Date().toISOString();
-                            fee.paymentMethod = paymentMethod;
-                            fee.paymentNotes = paymentNotes;
-                            remainingPayment = 0;
-                        }
-
-                        await FirebaseStorage.saveFee(fee); // ← Could also be guarded individually if needed
-                    }
-
-                    DataCache.invalidate('fees');
-
-                    showToast(`Payment of ₹${amountPaid.toLocaleString()} recorded successfully!`, 'success');
-
-                    // >>> NEW: Auto-refresh All Students if user is viewing it <<<
-                    if (App.getCurrentSection() === 'all-students') {
-                        await AllStudents.renderAllStudents();
-                    }
-
-                    await this.renderFeeRecords(); // ← Already there
-                    this.closePayFeeModal();
-                    await this.renderFeeRecords();
-                    this.closePayFeeModal();
-                } catch (error) {
-                    console.error("Failed to record payment:", error);
-                    showToast('Failed to save payment: ' + error.message, 'error');
-                } finally {
-                    this.isRecording = false;
-                }
+            if (holdMonth === '' || holdYear === '') {
+                showToast('Please select a month and year to hold.', 'error');
+                this.isRecording = false;
+                return;
             }
+
+            const holdMonthKey = `${holdYear}-${String(Number(holdMonth) + 1).padStart(2, '0')}`; // "2025-06"
+
+            // Fetch that specific fee record
+            let fees = await DataCache.getFees();
+            const targetFee = fees.find(f =>
+                f.studentId === studentId &&
+                f.month === holdMonthKey
+            );
+
+            if (!targetFee) {
+                showToast(`No fee record found for ${this.formatMonthYear(holdMonthKey)}.`, 'error');
+                this.isRecording = false;
+                return;
+            }
+
+            if (targetFee.paid) {
+                showToast(`Cannot hold ${this.formatMonthYear(holdMonthKey)} — already paid.`, 'error');
+                this.isRecording = false;
+                return;
+            }
+
+            // Mark as held
+            targetFee.hold = true;
+            targetFee.holdReason = paymentNotes || 'Held during payment';
+            targetFee.holdDate = new Date().toISOString();
+
+            await FirebaseStorage.saveFee(targetFee);
+            console.log(`⏸️ Month ${targetFee.month} manually held for student ${studentId}`);
+
+            // Refresh cache so it's excluded from payment allocation
+            fees = await DataCache.getFees();
+        }
+
+        // 👇 APPLY PAYMENT TO REMAINING UNPAID, NON-HELD FEES (oldest first)
+       // 👇 ONLY APPLY PAYMENT IF NOT HOLDING
+if (!holdChecked) {
+    let fees = await DataCache.getFees();
+    let unpaidFees = fees.filter(f =>
+        f.studentId === studentId &&
+        !f.paid &&
+        !f.hold
+    ).sort((a, b) => a.month.localeCompare(b.month)); // Oldest first
+
+    let remainingPayment = amountPaid;
+
+    for (let fee of unpaidFees) {
+        if (remainingPayment <= 0) break;
+
+        const outstanding = fee.amount - (fee.amountPaid || 0);
+
+        if (remainingPayment >= outstanding) {
+            fee.amountPaid = fee.amount;
+            fee.paid = true;
+            fee.partial = false; // Ensure partial flag is cleared
+            fee.paidDate = new Date().toISOString();
+            fee.paymentMethod = paymentMethod;
+            fee.paymentNotes = paymentNotes;
+            remainingPayment -= outstanding;
+        } else {
+            fee.amountPaid = (fee.amountPaid || 0) + remainingPayment;
+            fee.partial = true;
+            fee.paidDate = new Date().toISOString();
+            fee.paymentMethod = paymentMethod;
+            fee.paymentNotes = paymentNotes;
+            remainingPayment = 0;
+        }
+
+        await FirebaseStorage.saveFee(fee);
+    }
+}
+// 👆 If holding, we skip this entire block → no payment applied → no "partial ₹0" bug
+
+        // Invalidate cache
+        DataCache.invalidate('fees');
+
+        // Success message
+        let message = `Payment of ₹${amountPaid.toLocaleString()} recorded successfully!`;
+        if (holdChecked) {
+            const holdMonth = document.getElementById('holdMonthSelect').value;
+            const holdYear = document.getElementById('holdYearSelect').value;
+            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            message += ` • ${monthNames[holdMonth]} ${holdYear} placed on hold.`;
+        }
+        showToast(message, 'success');
+
+        // Refresh UI
+        if (App.getCurrentSection() === 'all-students') {
+            await AllStudents.renderAllStudents();
+        }
+        await this.renderFeeRecords();
+        this.closePayFeeModal();
+
+    } catch (error) {
+        console.error("Failed to record payment:", error);
+        showToast('Failed to save payment: ' + error.message, 'error');
+    } finally {
+        this.isRecording = false;
+    }
+}
 
             static async renderFeeRecords(searchTerm = '', statusFilter = '', monthFilter = '', yearFilter = '') {
-                try {
-                    await this.ensureFeeRecordsForAllStudents();
+    showLoading('fees');
+    try {
+        // 👇 STEP 1: Fetch students, fees, and batches together
+        const [feesRaw, batches] = await Promise.all([
+            DataCache.getFees(),
+            DataCache.getBatches()
+        ]);
 
-                    let fees = await DataCache.getFees();
+        // 👇 STEP 2: Create batch ID → Name map
+        const batchMap = {};
+        batches.forEach(b => {
+            batchMap[b.id] = b.name || 'Unnamed Batch';
+        });
 
-                    if (searchTerm) {
-                        const term = searchTerm.toLowerCase();
-                        fees = fees.filter(f =>
-                            f.studentName.toLowerCase().includes(term) ||
-                            f.studentId.toLowerCase().includes(term)
-                        );
-                    }
+        // 👇 STEP 3: Attach resolved batch name + keep original data
+        let fees = feesRaw.map(f => ({
+            ...f,
+            batchName: batchMap[f.batch] || f.batch || '—'
+        }));
 
-                    if (statusFilter) {
-                        if (statusFilter === 'paid') {
-                            fees = fees.filter(f => f.paid);
-                        } else if (statusFilter === 'unpaid') {
-                            fees = fees.filter(f => !f.paid && (!f.amountPaid || f.amountPaid === 0));
-                        } else if (statusFilter === 'partial') {
-                            fees = fees.filter(f => f.partial);
-                        }
-                    }
+        // 👇 STEP 4: Apply filters (unchanged)
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            fees = fees.filter(f =>
+                f.studentName.toLowerCase().includes(term) ||
+                f.studentId.toLowerCase().includes(term)
+            );
+        }
 
-                    if (monthFilter !== '' && monthFilter !== null) {
-                        const filterMonth = String(Number(monthFilter) + 1).padStart(2, '0');
-                        fees = fees.filter(f => f.month.endsWith(`-${filterMonth}`));
-                    }
-
-                    if (yearFilter) {
-                        fees = fees.filter(f => f.month.startsWith(yearFilter));
-                    }
-
-                    const tbody = document.getElementById('feesTableBody');
-                    if (!tbody) return;
-
-                    if (fees.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="9" class="no-data">No fee records found.</td></tr>`;
-                    } else {
-                        tbody.innerHTML = fees.map(fee => {
-                            const statusClass = fee.paid ? 'status-paid' : fee.partial ? 'status-partial' : 'status-unpaid';
-                            const statusText = fee.paid ? 'Paid' : fee.partial ? 'Partial' : 'Unpaid';
-
-                            return `
-                        <tr>
-                            <td>${fee.studentId.substring(0, 6).toUpperCase()}</td>
-                            <td>${fee.studentName}</td>
-                            <td>${fee.batch}</td>
-                            <td>${this.formatMonthYear(fee.month)}</td>
-                            <td>₹${fee.amount.toLocaleString()}</td>
-                            <td>₹${(fee.amountPaid || 0).toLocaleString()}</td>
-                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                            <td>${fee.paidDate ? formatDate(fee.paidDate) : '-'}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary" onclick="Fees.viewPaymentDetails(${JSON.stringify(fee).replace(/"/g, '&quot;')})">
-                                    <i class="fas fa-eye"></i> View
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                        }).join('');
-                    }
-
-                    await this.updateSummaryCards();
-                } catch (error) {
-                    console.error("Failed to render fee records:", error);
-                    showToast("Failed to load fee records.", "error");
-                }
+        if (statusFilter) {
+            if (statusFilter === 'paid') {
+                fees = fees.filter(f => f.paid);
+            } else if (statusFilter === 'unpaid') {
+                fees = fees.filter(f => !f.paid && (!f.amountPaid || f.amountPaid === 0));
+            } else if (statusFilter === 'partial') {
+                fees = fees.filter(f => f.partial);
             }
+        }
+
+        if (monthFilter !== '' && monthFilter !== null) {
+            const filterMonth = String(Number(monthFilter) + 1).padStart(2, '0');
+            fees = fees.filter(f => f.month.endsWith(`-${filterMonth}`));
+        }
+
+        if (yearFilter) {
+            fees = fees.filter(f => f.month.startsWith(yearFilter));
+        }
+
+        // 👇 STEP 5: SORT BY MONTH — NEWEST FIRST (reverse chronological)
+        fees.sort((a, b) => {
+            // Convert "YYYY-MM" to comparable number: e.g., "2025-06" → 202506
+            const aNum = parseInt(a.month.replace('-', ''));
+            const bNum = parseInt(b.month.replace('-', ''));
+            return aNum - bNum; // 👈 Oldest first (ASC)
+            // Use `return aNum - bNum;` for oldest first (ASC)
+        });
+
+        // 👇 STEP 6: Render table
+        const tbody = document.getElementById('feesTableBody');
+        if (!tbody) return;
+
+        if (fees.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" class="no-data">No fee records found.</td></tr>`;
+        } else {
+            tbody.innerHTML = fees.map(fee => {
+               let statusClass, statusText;
+
+if (fee.hold) {
+    statusClass = 'status-hold';
+    statusText = 'Hold';
+} else if (fee.paid) {
+    statusClass = 'status-paid';
+    statusText = 'Paid';
+} else if (fee.partial) {
+    statusClass = 'status-partial';
+    statusText = 'Partial';
+} else {
+    statusClass = 'status-unpaid';
+    statusText = 'Unpaid';
+}
+
+                return `
+                    <tr ${fee.hold ? 'data-hold="true"' : ''}>
+        <td>${fee.studentId.substring(0, 6).toUpperCase()}</td>
+                        <td>${fee.studentName}</td>
+                        <td>${fee.batchName}</td> <!-- ✅ NOW SHOWS READABLE BATCH NAME -->
+                        <td>${this.formatMonthYear(fee.month)}</td>
+                        <td>₹${fee.amount.toLocaleString()}</td>
+                        <td>₹${(fee.amountPaid || 0).toLocaleString()}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${fee.paidDate ? formatDate(fee.paidDate) : '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="Fees.viewPaymentDetails(${JSON.stringify(fee).replace(/"/g, '&quot;')})">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        await this.updateSummaryCards();
+
+    } catch (error) {
+        console.error("Failed to render fee records:", error);
+        showToast("Failed to load fee records.", "error");
+    } finally {
+        hideLoading('fees'); // Hide loading
+    }
+}
 
             static formatMonthYear(monthKey) {
                 const [year, month] = monthKey.split('-');
@@ -1860,9 +2783,17 @@ students
             static async updateSummaryCards() {
                 try {
                     const fees = await DataCache.getFees();
-                    const totalAmount = fees.reduce((sum, f) => sum + f.amount, 0);
-                    const paidAmount = fees.reduce((sum, f) => sum + (f.amountPaid || 0), 0);
-                    const outstanding = totalAmount - paidAmount;
+                const totalAmount = fees.reduce((sum, f) => {
+    if (f.hold) return sum; // 👈 Skip held
+    return sum + f.amount;
+}, 0);
+
+const paidAmount = fees.reduce((sum, f) => {
+    if (f.hold) return sum; // 👈 Skip held
+    return sum + (f.amountPaid || 0);
+}, 0);
+
+const outstanding = totalAmount - paidAmount;
 
                     document.getElementById('totalAmount').textContent = `₹${totalAmount.toLocaleString()}`;
                     document.getElementById('paidAmount').textContent = `₹${paidAmount.toLocaleString()}`;
@@ -1891,8 +2822,7 @@ students
                 <div><strong>Period:</strong> ${this.formatMonthYear(fee.month)}</div>
                 <div><strong>Amount Due:</strong> ₹${fee.amount.toLocaleString()}</div>
                 <div><strong>Amount Paid:</strong> ₹${(fee.amountPaid || 0).toLocaleString()}</div>
-                <div><strong>Status:</strong> <span class="status-badge ${fee.paid ? 'status-paid' : fee.partial ? 'status-partial' : 'status-unpaid'
-                    }">${fee.paid ? 'Paid' : fee.partial ? 'Partial Payment' : 'Unpaid'}</span></div>
+                <div><strong>Status:</strong> <span class="status-badge ${fee.paid ? 'status-paid' : fee.partial ? 'status-partial' : 'status-unpaid'}">${fee.paid ? 'Paid' : fee.partial ? 'Partial Payment' : 'Unpaid'}</span></div>
                 ${fee.paidDate ? `<div><strong>Paid On:</strong> ${formatDate(fee.paidDate)}</div>` : ''}
                 ${fee.paymentMethod ? `<div><strong>Method:</strong> ${this.formatPaymentMethod(fee.paymentMethod)}</div>` : ''}
                 ${fee.paymentNotes ? `<div><strong>Notes:</strong> ${fee.paymentNotes}</div>` : ''}
@@ -1901,208 +2831,216 @@ students
 
                 document.getElementById('viewPaymentModal').style.display = 'flex';
             }
-            static async recordPaymentForArchivedStudent(studentId, studentName) {
-                // Open the Pay Fee Modal first
-                this.openPayFeeModal();
 
-                // Wait for modal to render (next tick)
+            static async recordPaymentForArchivedStudent(studentId, studentName) {
+                this.openPayFeeModal();
                 setTimeout(() => {
                     const select = document.getElementById('studentSelect');
-                    if (!select) {
-                        console.error("Student select not found");
-                        return;
-                    }
+                    if (!select) return;
 
-                    // Check if option already exists (avoid duplicates if clicked twice)
                     let existingOption = Array.from(select.options).find(opt => opt.value === studentId);
                     if (!existingOption) {
-                        // Create new option for archived student
                         const option = document.createElement('option');
                         option.value = studentId;
                         option.textContent = `${studentName} (Archived)`;
-                        option.dataset.archived = "true"; // Optional flag for styling
+                        option.dataset.archived = "true";
                         select.appendChild(option);
                     }
-
-                    // Select it
                     select.value = studentId;
-
-                    // Trigger amount due calculation
                     this.updateAmountDue(studentId);
                 }, 50);
             }
+
             static formatPaymentMethod(methodKey) {
                 const map = { cash: 'Cash', bank_transfer: 'Bank Transfer', upi: 'UPI', card: 'Card' };
                 return map[methodKey] || methodKey;
             }
         }
-
         // =============================
         // 👥 ALL STUDENTS MODULE (Archived + Active)
         // =============================
         class AllStudents {
             // Add at top of AllStudents class (with other static properties)
-static currentDeleteStudentId = null;
-static currentDeleteStudentName = null;
+            static currentDeleteStudentId = null;
+            static currentDeleteStudentName = null;
 
-static confirmPermanentDelete(studentId, studentName) {
-    if (!studentId) {
-        showToast('Invalid student.', 'error');
-        return;
-    }
-    
-    this.currentDeleteStudentId = studentId;
-    this.currentDeleteStudentName = studentName;
-    
-    const modal = document.getElementById('confirmPasswordModal');
-    document.getElementById('passwordForm').reset();
-    modal.style.display = 'flex';
-}static async permanentDeleteStudent(studentId, studentName) {
+            static confirmPermanentDelete(studentId, studentName) {
+                if (!studentId) {
+                    showToast('Invalid student.', 'error');
+                    return;
+                }
+
+                this.currentDeleteStudentId = studentId;
+                this.currentDeleteStudentName = studentName;
+
+                const modal = document.getElementById('confirmPasswordModal');
+                document.getElementById('passwordForm').reset();
+                modal.style.display = 'flex';
+            } static async permanentDeleteStudent(studentId, studentName) {
     if (!confirm(`Are you absolutely sure you want to permanently delete "${studentName}"? This cannot be undone.`)) {
         return;
     }
 
     try {
-        // First, delete all associated fee records
+        // Get all fee records for this student
         const fees = await DataCache.getFees();
         const studentFees = fees.filter(f => f.studentId === studentId);
-        
-        // Delete each fee record
-        for (const fee of studentFees) {
-            await deleteDoc(doc(db, "fees", fee.id));
+
+        // 👇 SHOW TOAST AFTER studentFees IS DEFINED 👇
+        showToast(`⏳ Deleting "${studentName}" and ${studentFees.length} fee records...`, 'success');
+
+        // Use WriteBatch to delete ALL fee records in 1 or few round trips
+        if (studentFees.length > 0) {
+            const BATCH_LIMIT = 500; // Firestore max per batch
+
+            for (let i = 0; i < studentFees.length; i += BATCH_LIMIT) {
+                const batch = writeBatch(db);
+                const chunk = studentFees.slice(i, i + BATCH_LIMIT);
+
+                for (const fee of chunk) {
+                    batch.delete(doc(db, "fees", fee.id));
+                }
+
+                await batch.commit(); // ⚡ Deletes entire chunk in 1 network call
+                console.log(`✅ Deleted ${chunk.length} fee records in batch.`);
+            }
         }
 
-        // Then delete the student document
+        // Now delete the student
         await deleteDoc(doc(db, "students", studentId));
 
         // Invalidate caches
         DataCache.invalidate('students');
         DataCache.invalidate('fees');
 
-        showToast(`✅ Student "${studentName}" permanently deleted.`, 'success');
+        showToast(`✅ Student "${studentName}" and ${studentFees.length} fee records deleted instantly!`, 'success');
 
-        // Refresh view
+        // Refresh UI
         await this.renderAllStudents();
 
     } catch (error) {
-        console.error("Failed to permanently delete student:", error);
-        showToast('Failed to delete student: ' + error.message, 'error');
+        console.error("❌ Failed to permanently delete student:", error);
+        showToast('Failed to delete: ' + (error.message || 'Unknown error'), 'error');
     }
 }
+            static bindPasswordModalEvents() {
+                // Close modal
+                document.getElementById('closePasswordModal')?.addEventListener('click', () => {
+                    document.getElementById('confirmPasswordModal').style.display = 'none';
+                });
 
-static bindPasswordModalEvents() {
-    // Close modal
-    document.getElementById('closePasswordModal')?.addEventListener('click', () => {
-        document.getElementById('confirmPasswordModal').style.display = 'none';
-    });
-    
-    document.getElementById('cancelPasswordBtn')?.addEventListener('click', () => {
-        document.getElementById('confirmPasswordModal').style.display = 'none';
-    });
+                document.getElementById('cancelPasswordBtn')?.addEventListener('click', () => {
+                    document.getElementById('confirmPasswordModal').style.display = 'none';
+                });
 
-    // Handle form submission
-    document.getElementById('passwordForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const passwordInput = document.getElementById('confirmPassword');
-        const password = passwordInput.value.trim();
-        
-        if (!password) {
-            showToast('Please enter your password.', 'error');
-            return;
-        }
+                // Handle form submission
+                document.getElementById('passwordForm')?.addEventListener('submit', async (e) => {
+                    e.preventDefault();
 
-        try {
-            // Get current user
-            const user = auth.currentUser;
-            if (!user || !user.email) {
-                throw new Error('No authenticated user found.');
+                    const passwordInput = document.getElementById('confirmPassword');
+                    const password = passwordInput.value.trim();
+
+                    if (!password) {
+                        showToast('Please enter your password.', 'error');
+                        return;
+                    }
+
+                    try {
+                        // Get current user
+                        const user = auth.currentUser;
+                        if (!user || !user.email) {
+                            throw new Error('No authenticated user found.');
+                        }
+
+                        // Re-authenticate
+                        const credential = EmailAuthProvider.credential(user.email, password);
+                        await reauthenticateWithCredential(user, credential);
+
+                        // Password correct → proceed to delete
+                        await this.permanentDeleteStudent(this.currentDeleteStudentId, this.currentDeleteStudentName);
+
+                        // Close modal
+                        document.getElementById('confirmPasswordModal').style.display = 'none';
+
+                    } catch (error) {
+                        console.error("Password verification failed:", error);
+                        if (error.code === 'auth/wrong-password') {
+                            showToast('Incorrect password. Please try again.', 'error');
+                        } else if (error.code === 'auth/too-many-requests') {
+                            showToast('Too many attempts. Try again later.', 'error');
+                        } else {
+                            showToast('Authentication failed: ' + error.message, 'error');
+                        }
+                    }
+                });
             }
-
-            // Re-authenticate
-            const credential = EmailAuthProvider.credential(user.email, password);
-            await reauthenticateWithCredential(user, credential);
-
-            // Password correct → proceed to delete
-            await this.permanentDeleteStudent(this.currentDeleteStudentId, this.currentDeleteStudentName);
-
-            // Close modal
-            document.getElementById('confirmPasswordModal').style.display = 'none';
-
-        } catch (error) {
-            console.error("Password verification failed:", error);
-            if (error.code === 'auth/wrong-password') {
-                showToast('Incorrect password. Please try again.', 'error');
-            } else if (error.code === 'auth/too-many-requests') {
-                showToast('Too many attempts. Try again later.', 'error');
-            } else {
-                showToast('Authentication failed: ' + error.message, 'error');
+            static async init() {
+                await this.renderAllStudents();
+                this.bindEvents();
+                this.bindPasswordModalEvents(); // ← ADD THIS LINE
             }
-        }
-    });
-}
-          static async init() {
-    await this.renderAllStudents();
-    this.bindEvents();
-    this.bindPasswordModalEvents(); // ← ADD THIS LINE
-}
 
             static bindEvents() {
                 document.getElementById('searchAllStudents')?.addEventListener('input', (e) => {
                     this.filterStudents(e.target.value);
                 });
             }
-static async renderAllStudents(filterText = '') {
-    try {
-        const [studentsRaw, fees, batches] = await Promise.all([
-            DataCache.getStudents(),
-            DataCache.getFees(),
-            DataCache.getBatches()
-        ]);
+            static async renderAllStudents(filterText = '') {
+                showLoading('all-students');
+                try {
+                    const [studentsRaw, fees, batches] = await Promise.all([
+                        DataCache.getStudents(),
+                        DataCache.getFees(),
+                        DataCache.getBatches()
+                    ]);
 
-        // Create batch ID → Name map
-        const batchMap = {};
-        batches.forEach(b => {
-            batchMap[b.id] = b.name || 'Unnamed Batch';
-        });
+                    // Create batch ID → Name map
+                    const batchMap = {};
+                    batches.forEach(b => {
+                        batchMap[b.id] = b.name || 'Unnamed Batch';
+                    });
 
-        // Attach financials + resolve batch name
-        let students = studentsRaw.map(s => {
-            const studentFees = fees.filter(f => f.studentId === s.id);
-            const totalDue = studentFees.reduce((sum, f) => sum + (f.amount || 0), 0);
-            const totalPaid = studentFees.reduce((sum, f) => sum + (f.amountPaid || 0), 0);
+                    // Attach financials + resolve batch name
+                    let students = studentsRaw.map(s => {
+                    const studentFees = fees.filter(f => f.studentId === s.id && !f.hold); // 👈 Exclude held
+const totalDue = studentFees.reduce((sum, f) => sum + (f.amount || 0), 0);
+const totalPaid = studentFees.reduce((sum, f) => sum + (f.amountPaid || 0), 0);
+                        return {
+                            ...s,
+                            totalDue,
+                            totalPaid,
+                            outstanding: totalDue - totalPaid,
+                            batchName: batchMap[s.batch] || (s.batch ? 'Unknown Batch' : '—')
+                        };
+                    });
 
-            return {
-                ...s,
-                totalDue,
-                totalPaid,
-                outstanding: totalDue - totalPaid,
-                batchName: batchMap[s.batch] || (s.batch ? 'Unknown Batch' : '—')
-            };
-        });
+                    if (filterText) {
+                        const term = filterText.toLowerCase();
+                        students = students.filter(s =>
+                            (s.name?.toLowerCase().includes(term)) ||
+                            (s.fatherName?.toLowerCase().includes(term))
+                        );
+                    }
 
-        if (filterText) {
-            const term = filterText.toLowerCase();
-            students = students.filter(s =>
-                (s.name?.toLowerCase().includes(term)) ||
-                (s.fatherName?.toLowerCase().includes(term))
-            );
-        }
+                    const tbody = document.getElementById('allStudentsTableBody');
+                    if (!tbody) return;
 
-        const tbody = document.getElementById('allStudentsTableBody');
-        if (!tbody) return;
+                    if (students.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="11">No students found.</td></tr>';
+                        return;
+                    }
 
-        if (students.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="11">No students found.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = students.map(s => `
+                    tbody.innerHTML = students.map(s => `
 <tr class="${s.deleted ? 'table-danger' : ''}">
     <td>${s.id?.substring(0, 6).toUpperCase() || '—'}</td>
     <td>${s.name || '—'}</td>
     <td>${s.fatherName || '—'}</td>
-    <td>${s.phone || '—'}</td>
+    <td>
+    ${s.phone && Array.isArray(s.phone) 
+        ? s.phone.join('<br>') 
+        : s.phone || '—'
+    }
+</td>
     <td>${s.course || '—'}</td>
     <td>${s.batchName}</td> <!-- 👈 NOW SHOWS BATCH NAME -->
     <td>${formatDate(s.admissionDate) || '—'}</td>
@@ -2125,11 +3063,13 @@ static async renderAllStudents(filterText = '') {
 </tr>
 `).join('');
 
-    } catch (error) {
-        console.error("❌ Failed to load all students:", error);
-        showToast('Failed to load all students.', 'error');
-    }
-}
+                } catch (error) {
+                    console.error("❌ Failed to load all students:", error);
+                    showToast('Failed to load all students.', 'error');
+                } finally {
+                    hideLoading('all-students'); // Hide loading
+                }
+            }
 
             static filterStudents(query) {
                 this.renderAllStudents(query);
