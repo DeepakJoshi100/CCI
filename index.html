@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -287,11 +288,16 @@
                         <i class="fas fa-sync fa-spin"></i> Syncing fee records... Please wait.
                     </div>
                     <div class="page-header">
-                        <h2>Fee Management</h2>
-                        <button class="btn btn-primary" id="payFeeBtn">
-                            <i class="fas fa-money-bill"></i> Record Payment
-                        </button>
-                    </div>
+    <h2>Fee Management</h2>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn btn-primary" id="payFeeBtn">
+            <i class="fas fa-money-bill"></i> Record Payment
+        </button>
+        <button class="btn btn-success" id="downloadExcelBtn">
+            <i class="fas fa-file-excel"></i> Download All Data (Excel)
+        </button>
+    </div>
+</div>
                     <div class="section-content-wrapper" style="position: relative;">
                         <div class="loading-overlay" id="fees-loading" style="display: none;">
                             <div class="loading-spinner"></div>
@@ -2021,61 +2027,53 @@
             static isRecording = false;
 
 
-  static async init() {
+static async init() {
     console.log("🚀 Fees.init() starting...");
 
-    // Wait for DOM
     if (document.readyState === 'loading') {
         await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
     }
 
+    // Populate year filter FIRST
+    this.populateYearFilter();
+    await new Promise(r => setTimeout(r, 50)); // Let DOM settle
+
     const now = new Date();
-    const currentMonth = now.getMonth();       // e.g., 8 (September)
-    const currentYear = now.getFullYear();      // e.g., 2025
-    const currentMonthStr = String(currentMonth);
-    const currentYearStr = String(currentYear);
+    const currentMonthStr = String(now.getMonth());
+    const currentYearStr = String(now.getFullYear());
 
     const monthFilter = document.getElementById('monthFilter');
     const yearFilter = document.getElementById('yearFilter');
 
-    // 👇 STEP 1: Populate year filter (clears & rebuilds options)
-    this.populateYearFilter();
-
-    // 👇 STEP 2: Wait for browser to render new <option> elements
-    await new Promise(r => setTimeout(r, 50));
-
     let filtersChanged = false;
 
-    // 👇 STEP 3: Auto-select current MONTH if still on placeholder
     if (monthFilter && monthFilter.value === "") {
         monthFilter.value = currentMonthStr;
         filtersChanged = true;
-        console.log("✅ Month auto-selected:", currentMonthStr);
     }
 
-    // 👇 STEP 4: Auto-select current YEAR if still on placeholder
     if (yearFilter && yearFilter.value === "") {
         const optionExists = [...yearFilter.options].some(opt => opt.value === currentYearStr);
         if (optionExists) {
             yearFilter.value = currentYearStr;
-            yearFilter.dispatchEvent(new Event('change')); // 👈 Force UI update
+            yearFilter.dispatchEvent(new Event('change'));
             filtersChanged = true;
-            console.log("✅ Year auto-selected:", currentYearStr);
         }
     }
 
-    // 👇 STEP 5: CRITICAL — If we changed filters, APPLY them to refresh table
+    // 👇👇 PATCH 1: FORCE SYNC BEFORE RENDERING 👇👇
+    showToast("⏳ Preparing fee records...", "success");
+    await this.ensureFeeRecordsForAllStudents(); // ← Wait for sync to complete
+
     if (filtersChanged) {
         console.log("🔄 Filters changed — applying...");
-        this.applyFilters(); // 👈 This updates the table based on current dropdown values
+        this.applyFilters();
     } else {
-        console.log("📊 No filter change — rendering all records...");
-        await this.renderFeeRecords();
+        console.log("📊 Rendering all records...");
+        await this.renderFeeRecords(); // ← Now safe — data exists
     }
 
-    // 👇 STEP 6: Bind events (search, change, etc.)
     this.bindEvents();
-
     console.log("✅ Fees.init() completed.");
 }
             static startBackgroundSync() {
@@ -2197,27 +2195,31 @@
             const startMonth = (year === admissionDate.getFullYear()) ? admissionDate.getMonth() : 0;
             const endMonth = (year === currentYear) ? currentMonth : 11;
 
-            for (let m = startMonth; m <= endMonth; m++) {
-                const monthKey = `${year}-${String(m + 1).padStart(2, '0')}`;
-                const compositeKey = `${studentId}-${monthKey}`;
-                if (existingKeys.has(compositeKey)) continue;
+           for (let m = startMonth; m <= endMonth; m++) {
+    const monthKey = `${year}-${String(m + 1).padStart(2, '0')}`;
+    const compositeKey = `${studentId}-${monthKey}`;
+    if (existingKeys.has(compositeKey)) continue;
 
-                const billingDate = new Date(year, m, admissionDay);
-                if (today < billingDate) continue;
+    // 👇 PATCH: Remove day-based skip for PAST/CURRENT months
+    // Only skip if ENTIRE MONTH is in future
+    if (year > currentYear || (year === currentYear && m > currentMonth)) {
+        continue; // Skip only future months
+    }
 
-                newFeesToCreate.push({
-                    studentId,
-                    studentName: studentData.name,
-                    month: monthKey,
-                    amount: studentData.monthlyFee || 0,
-                    amountPaid: 0,
-                    paid: false,
-                    paidDate: null,
-                    batch: studentData.batch,
-                    course: studentData.course,
-                    ownerId: CURRENT_USER_ID
-                });
-            }
+    // For past/current months → ALWAYS generate record
+    newFeesToCreate.push({
+        studentId,
+        studentName: studentData.name,
+        month: monthKey,
+        amount: studentData.monthlyFee || 0,
+        amountPaid: 0,
+        paid: false,
+        paidDate: null,
+        batch: studentData.batch,
+        course: studentData.course,
+        ownerId: CURRENT_USER_ID
+    });
+}
         }
 
         if (newFeesToCreate.length > 0) {
@@ -2251,7 +2253,9 @@
                 document.getElementById('feeStatusFilter')?.addEventListener('change', () => this.applyFilters());
                 document.getElementById('monthFilter')?.addEventListener('change', () => this.applyFilters());
                 document.getElementById('yearFilter')?.addEventListener('change', () => this.applyFilters());
-
+document.getElementById('downloadExcelBtn')?.addEventListener('click', () => {
+    Fees.downloadAllDataAsExcel();
+});
                 this.populateYearFilter();
                 this.populateStudentSelect();
               document.getElementById('holdPaymentCheckbox')?.addEventListener('change', (e) => {
@@ -2434,11 +2438,27 @@ static openPayFeeModal() {
         const fees = await DataCache.getFees();
         const holdChecked = document.getElementById('holdPaymentCheckbox')?.checked || false;
 
-        let studentFees = fees.filter(f =>
-            f.studentId === studentId &&
-            !f.paid &&
-            !f.hold
-        );
+       let studentFees = fees.filter(f =>
+    f.studentId === studentId &&
+    !f.paid &&
+    !f.hold
+);
+
+// Get student to check admission day
+const students = await DataCache.getStudents();
+const student = students.find(s => s.id === studentId);
+if (student && student.admissionDate) {
+    const admissionDay = new Date(student.admissionDate).getDate();
+
+    studentFees = studentFees.filter(fee => {
+        const [yearStr, monthStr] = fee.month.split('-');
+        const billingDate = new Date(parseInt(yearStr), parseInt(monthStr) - 1, admissionDay);
+        const today = new Date();
+
+        // Include if billing date has passed (even if not paid)
+        return today >= billingDate;
+    });
+}
 
         // If holding a SPECIFIC month, exclude THAT month
         if (holdChecked) {
@@ -2640,7 +2660,134 @@ this.closePayFeeModal();
         this.isRecording = false;
     }
 }
+static async downloadAllDataAsExcel() {
+    showLoading('fees'); // Optional: show loader during generation
+    try {
+        showToast("📊 Preparing Excel file...", "success");
 
+        // Fetch all data
+        const [students, fees, batches] = await Promise.all([
+            DataCache.getStudents(),
+            DataCache.getFees(),
+            DataCache.getBatches()
+        ]);
+
+        // Create batch ID → Name map
+        const batchMap = {};
+        batches.forEach(b => {
+            batchMap[b.id] = b.name || 'Unnamed Batch';
+        });
+
+        // Get date range: from earliest admission to today
+        const today = new Date();
+        let minYear = today.getFullYear();
+        let maxYear = today.getFullYear();
+
+        students.forEach(s => {
+            if (!s.admissionDate) return;
+            const admission = new Date(s.admissionDate);
+            if (isNaN(admission)) return;
+            const year = admission.getFullYear();
+            minYear = Math.min(minYear, year);
+            maxYear = Math.max(maxYear, today.getFullYear());
+        });
+
+        // Generate list of all months from minYear to maxYear
+        const allMonths = [];
+        for (let year = minYear; year <= maxYear; year++) {
+            for (let month = 0; month <= 11; month++) { // 0=Jan, 11=Dec
+                if (year === today.getFullYear() && month > today.getMonth()) break;
+                allMonths.push({
+                    key: `${year}-${String(month + 1).padStart(2, '0')}`,
+                    label: `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month]} ${year}`
+                });
+            }
+        }
+
+        // Build rows for Excel
+        const rows = [];
+
+        // Header row
+        const headers = [
+            "Student ID", "Name", "Father's Name", "Phone",
+            "Course", "Batch", "Admission Date", "Monthly Fee"
+        ];
+
+        // Add month columns
+        allMonths.forEach(m => {
+            headers.push(`${m.label} - Status`);
+            headers.push(`${m.label} - Due`);
+            headers.push(`${m.label} - Paid`);
+            headers.push(`${m.label} - Method`);
+            headers.push(`${m.label} - Date`);
+            headers.push(`${m.label} - Notes`);
+        });
+
+        rows.push(headers);
+
+        // One row per student
+        for (const student of students) {
+           const row = [
+    student.id?.substring(0, 8) || '',
+    student.name || '',
+    student.fatherName || '',
+    Array.isArray(student.phone) ? student.phone.join(', ') : (student.phone || ''),
+    student.course || '',
+    batchMap[student.batch] || '—',
+    formatDate(student.admissionDate) || '',
+    student.monthlyFee || 0
+];
+
+            // For each month, find matching fee record
+            for (const month of allMonths) {
+                const feeRecord = fees.find(f =>
+                    f.studentId === student.id &&
+                    f.month === month.key
+                );
+
+                if (feeRecord) {
+                    let status = 'Unpaid';
+                    if (feeRecord.hold) status = 'Hold';
+                    else if (feeRecord.paid) status = 'Paid';
+                    else if (feeRecord.partial) status = 'Partial';
+
+                    row.push(status);
+                    row.push(feeRecord.amount || 0);
+                    row.push(feeRecord.amountPaid || 0);
+                    row.push(this.formatPaymentMethod(feeRecord.paymentMethod) || '');
+                    row.push(feeRecord.paidDate ? formatDate(feeRecord.paidDate) : '');
+                    row.push(feeRecord.paymentNotes || '');
+                } else {
+                    // No fee record for this month (maybe not billed yet)
+                    row.push('N/A');
+                    row.push(0);
+                    row.push(0);
+                    row.push('');
+                    row.push('');
+                    row.push('');
+                }
+            }
+
+            rows.push(row);
+        }
+
+        // Create worksheet and workbook
+        const worksheet = XLSX.utils.aoa_to_sheet(rows);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Fee Records");
+
+        // Generate and trigger download
+        XLSX.writeFile(workbook, `EduManage_All_Fee_Records_${formatDate(new Date())}.xlsx`);
+
+        showToast("✅ Excel file downloaded successfully!", "success");
+
+    } catch (error) {
+        console.error("❌ Failed to generate Excel:", error);
+        showToast("Failed to generate Excel: " + error.message, "error");
+    } finally {
+        hideLoading('fees');
+    }
+}
      static async renderFeeRecords(searchTerm = '', statusFilter = '', monthFilter = '', yearFilter = '') {
     showLoading('fees');
     try {
@@ -2660,24 +2807,7 @@ this.closePayFeeModal();
 
         const today = new Date();
 
-        // 👇 FILTER OUT UNBILLED MONTHS (only for unpaid, non-held)
-        fees = fees.filter(fee => {
-            if (fee.paid || fee.hold) return true; // Always show paid/hold
-
-            const student = students.find(s => s.id === fee.studentId);
-            if (!student || !student.admissionDate) return true;
-
-            const admissionDate = new Date(student.admissionDate);
-            if (isNaN(admissionDate)) return true;
-
-            const admissionDay = admissionDate.getDate();
-            const [yearStr, monthStr] = fee.month.split('-');
-            const year = parseInt(yearStr);
-            const month = parseInt(monthStr) - 1;
-            const billingDate = new Date(year, month, admissionDay);
-
-            return today >= billingDate; // Only show if billing date passed
-        });
+        
 
         // Apply filters
         if (searchTerm) {
@@ -2713,8 +2843,26 @@ this.closePayFeeModal();
         if (fees.length === 0) {
             tbody.innerHTML = `<tr><td colspan="9" class="no-data">No fee records found.</td></tr>`;
         } else {
-            tbody.innerHTML = fees.map(fee => {
-                let statusClass = 'status-unpaid', statusText = 'Unpaid';
+           tbody.innerHTML = fees.map(fee => {
+   let statusClass = 'status-unpaid', statusText = 'Unpaid';
+
+// Check if this is a future-dated fee (billing day not reached)
+if (!fee.paid && !fee.hold && !fee.partial) {
+    const student = students.find(s => s.id === fee.studentId);
+    if (student && student.admissionDate) {
+        const admissionDate = new Date(student.admissionDate);
+        const admissionDay = admissionDate.getDate();
+        const [yearStr, monthStr] = fee.month.split('-');
+        const feeYear = parseInt(yearStr);
+        const feeMonth = parseInt(monthStr) - 1; // 0-indexed
+        const billingDate = new Date(feeYear, feeMonth, admissionDay);
+
+        if (billingDate > today) {
+            statusClass = 'status-upcoming';
+            statusText = 'Upcoming';
+        }
+    }
+}
                 if (fee.hold) { statusClass = 'status-hold'; statusText = 'Hold'; }
                 else if (fee.paid) { statusClass = 'status-paid'; statusText = 'Paid'; }
                 else if (fee.partial) { statusClass = 'status-partial'; statusText = 'Partial'; }
@@ -2810,7 +2958,14 @@ static getCurrentFilters() {
         yearFilter: document.getElementById('yearFilter')?.value || ''
     };
 }
-
+static getCurrentFilters() {
+    return {
+        searchTerm: document.getElementById('feeSearch')?.value || '',
+        statusFilter: document.getElementById('feeStatusFilter')?.value || '',
+        monthFilter: document.getElementById('monthFilter')?.value || '',
+        yearFilter: document.getElementById('yearFilter')?.value || ''
+    };
+}
             static viewPaymentDetails(fee) {
                 const content = document.getElementById('paymentDetailsContent');
                 if (!content) return;

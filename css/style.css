@@ -1166,7 +1166,11 @@ tr[data-hold="true"] td {
         margin-left: 280px;
     }
 }
-
+.status-upcoming {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+    border: 1px solid #ffeaa7;
+}
 /* Print Styles */
 @media print {
     .sidebar,
